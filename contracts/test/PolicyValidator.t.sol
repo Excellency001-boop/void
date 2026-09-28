@@ -45,7 +45,9 @@ contract PolicyValidatorTest is Test {
         validAfter = uint48(block.timestamp);
         validUntil = uint48(block.timestamp + 1 days);
 
-        account.install(abi.encode(owner, sessionKey, validAfter, validUntil, NATIVE_CAP, MAX_TX));
+        account.install(
+            abi.encode(owner, sessionKey, validAfter, validUntil, NATIVE_CAP, MAX_TX, address(0), bytes4(0))
+        );
 
         account.configure(
             abi.encodeWithSelector(PolicyValidator.setAllowedSelector.selector, target, ALLOWED_SELECTOR, true)
@@ -111,6 +113,24 @@ contract PolicyValidatorTest is Test {
         assertEq(txCount, 1);
     }
 
+    function test_OnInstall_SeedsInitialWhitelistEntry() public {
+        // A fresh account whose onInstall seeds (target, ALLOWED_SELECTOR) directly — no separate
+        // `setAllowedSelector` call — must be able to act on it immediately. This is the exact
+        // atomicity Kernel v3's enable-mode flow depends on: install and first action happen in
+        // one signed UserOp, so the whitelist can't be a step that comes strictly after install.
+        MockSessionAccount freshAccount = new MockSessionAccount(address(validator));
+        freshAccount.install(
+            abi.encode(owner, sessionKey, validAfter, validUntil, NATIVE_CAP, MAX_TX, target, ALLOWED_SELECTOR)
+        );
+
+        bytes32 hash = keccak256("op-seeded-whitelist");
+        PackedUserOperation memory userOp = _buildUserOp(target, 0, abi.encodeWithSelector(ALLOWED_SELECTOR));
+        userOp.sender = address(freshAccount);
+        userOp.signature = _sign(sessionKeyPk, hash);
+
+        freshAccount.validateUserOp(userOp, hash);
+    }
+
     function test_AllowedErc20Transfer_SucceedsAndDecrementsTokenCap() public {
         bytes memory transferCall = abi.encodeWithSelector(IERC20.transfer.selector, recipient, 40e18);
         bytes32 hash = keccak256("op-erc20");
@@ -137,7 +157,11 @@ contract PolicyValidatorTest is Test {
         // isolation from the (already-active) `account` used by every other test.
         MockSessionAccount freshAccount = new MockSessionAccount(address(validator));
         uint48 futureStart = uint48(block.timestamp + 1 hours);
-        freshAccount.install(abi.encode(owner, sessionKey, futureStart, futureStart + 1 days, NATIVE_CAP, MAX_TX));
+        freshAccount.install(
+            abi.encode(
+                owner, sessionKey, futureStart, futureStart + 1 days, NATIVE_CAP, MAX_TX, address(0), bytes4(0)
+            )
+        );
         freshAccount.configure(
             abi.encodeWithSelector(PolicyValidator.setAllowedSelector.selector, target, ALLOWED_SELECTOR, true)
         );

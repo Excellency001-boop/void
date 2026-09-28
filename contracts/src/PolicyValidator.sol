@@ -88,15 +88,25 @@ contract PolicyValidator is IERC7579Validator {
     // ── Module lifecycle (ERC-7579) ──────────────────────────────────────────
 
     /// @param data abi.encode(address owner, address sessionKey, uint48 validAfter,
-    ///        uint48 validUntil, uint256 nativeSpendCap, uint256 maxTxCount).
-    ///        The target/selector whitelist, ERC-20 caps, and recipient caps are configured with
-    ///        separate calls to `setAllowedSelector` / `setTokenCap` / `setRecipientCap`
-    ///        immediately after install — by the account itself, before the session key is ever
-    ///        handed to the agent.
+    ///        uint48 validUntil, uint256 nativeSpendCap, uint256 maxTxCount,
+    ///        address initialTarget, bytes4 initialSelector).
+    ///        Further whitelist entries, ERC-20 caps, and recipient caps are configured with
+    ///        separate calls to `setAllowedSelector` / `setTokenCap` / `setRecipientCap` — by the
+    ///        account itself — any time after install.
+    ///
+    ///        The trailing (initialTarget, initialSelector) pair exists because Kernel v3 (and
+    ///        ERC-7579 "enable mode" generally) installs a non-root validator and authorizes its
+    ///        first action in the SAME signed UserOp: our own onInstall runs, then this same
+    ///        validator is immediately asked to validate that first action, all before any
+    ///        separate owner-signed "add to whitelist" call could possibly land. Without seeding
+    ///        one entry here, the first agent action would always be rejected — not because it's
+    ///        against policy, but because policy configuration hadn't had a chance to happen yet.
+    ///        Pass address(0) to skip seeding and configure the whitelist entirely via
+    ///        `setAllowedSelector` afterward instead.
     function onInstall(bytes calldata data) external override {
         address account = msg.sender;
         if (sessionPolicies[account].sessionKey != address(0)) revert AlreadyInitialized(account);
-        if (data.length != 192) revert InvalidPolicyData();
+        if (data.length != 256) revert InvalidPolicyData();
 
         (
             address owner,
@@ -104,11 +114,17 @@ contract PolicyValidator is IERC7579Validator {
             uint48 validAfter,
             uint48 validUntil,
             uint256 nativeSpendCap,
-            uint256 maxTxCount
-        ) = abi.decode(data, (address, address, uint48, uint48, uint256, uint256));
+            uint256 maxTxCount,
+            address initialTarget,
+            bytes4 initialSelector
+        ) = abi.decode(data, (address, address, uint48, uint48, uint256, uint256, address, bytes4));
 
         if (owner == address(0) || sessionKey == address(0) || validUntil <= validAfter) {
             revert InvalidPolicyData();
+        }
+
+        if (initialTarget != address(0)) {
+            allowedSelectors[account][initialTarget][initialSelector] = true;
         }
 
         sessionPolicies[account] = SessionPolicy({
