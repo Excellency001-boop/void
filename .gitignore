@@ -1,0 +1,21 @@
+# Foundry
+contracts/lib/
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+contracts/.env
+
+# Node (api/, web/)
+**/node_modules/
+**/.next/
+**/dist/
+**/.turbo/
+*.log
+
+# Env / secrets
+.env
+.env.local
+*.local
+
+# OS
+.DS_Store
