@@ -44,6 +44,23 @@ import {MessageHashUtils} from "openzeppelin-contracts/contracts/utils/cryptogra
 contract PolicyValidator is IERC7579Validator {
     using ECDSA for bytes32;
 
+    // ── Events ──────────────────────────────────────────────────────────────
+
+    /// @dev Emitted once per successfully validated action — i.e. after every priority-ordered
+    ///      check has passed. This is the on-chain audit trail: the API/dashboard reconstruct a
+    ///      session's history from these logs rather than needing their own indexer to duplicate
+    ///      state the chain already has.
+    event ActionValidated(
+        address indexed account,
+        address indexed target,
+        bytes4 selector,
+        uint256 value,
+        address token,
+        uint256 tokenAmount
+    );
+
+    event ForceRevoked(address indexed account, address indexed caller);
+
     // ── Errors ──────────────────────────────────────────────────────────────
 
     error AlreadyInitialized(address account);
@@ -182,6 +199,27 @@ contract PolicyValidator is IERC7579Validator {
         SessionPolicy storage policy = sessionPolicies[account];
         if (msg.sender != account && msg.sender != policy.owner) revert NotAccountOwner();
         policy.revoked = true;
+        emit ForceRevoked(account, msg.sender);
+    }
+
+    /// @notice Gasless variant of `forceRevoke`: anyone can relay this on the owner's behalf, as
+    ///         long as they present a signature the owner actually produced. Exists because
+    ///         requiring the owner to hold gas just to pull the plug on a misbehaving agent is a
+    ///         bad safety property for a "kill switch" — the whole point is that it works
+    ///         immediately, not after a bridge-and-fund detour.
+    ///
+    ///         No nonce: replaying an old revoke signature only re-revokes an already-revoked
+    ///         session, which is a no-op, not a vulnerability. The chainid is included so a
+    ///         signature made for one deployment can't revoke a same-address vault the owner
+    ///         happens to also control on a different chain.
+    function forceRevokeWithSig(address account, bytes calldata ownerSig) external {
+        SessionPolicy storage policy = sessionPolicies[account];
+        if (policy.sessionKey == address(0)) revert NotInitialized(account);
+        bytes32 digest =
+            MessageHashUtils.toEthSignedMessageHash(keccak256(abi.encodePacked("VOID_REVOKE", block.chainid, account)));
+        if (digest.recover(ownerSig) != policy.owner) revert NotAccountOwner();
+        policy.revoked = true;
+        emit ForceRevoked(account, msg.sender);
     }
 
     // ── ERC-4337 validation entrypoint ───────────────────────────────────────
@@ -246,6 +284,8 @@ contract PolicyValidator is IERC7579Validator {
             tokenCaps[account][action.token].spent += action.tokenAmount;
         }
         policy.txCount += 1;
+
+        emit ActionValidated(account, action.target, action.selector, action.value, action.token, action.tokenAmount);
 
         return ERC4337Utils.packValidationData(false, policy.validUntil, policy.validAfter);
     }

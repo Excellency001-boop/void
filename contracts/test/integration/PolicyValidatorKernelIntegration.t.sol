@@ -155,6 +155,11 @@ contract PolicyValidatorKernelIntegrationTest is Test {
 
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = op;
+
+        vm.expectEmit(true, true, false, true, address(policyValidator));
+        emit PolicyValidator.ActionValidated(
+            kernelAddr, address(callee), MockCallee.setValue.selector, 0, address(0), 0
+        );
         entrypoint.handleOps(ops, payable(address(0xdeadbeef)));
 
         assertEq(callee.value(), 42);

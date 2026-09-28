@@ -105,6 +105,9 @@ contract PolicyValidatorTest is Test {
         PackedUserOperation memory userOp =
             _signed(target, 0.1 ether, abi.encodeWithSelector(ALLOWED_SELECTOR), hash);
 
+        vm.expectEmit(true, true, false, true, address(validator));
+        emit PolicyValidator.ActionValidated(address(account), target, ALLOWED_SELECTOR, 0.1 ether, address(0), 0);
+
         uint256 validationData = account.validateUserOp(userOp, hash);
         assertEq(validationData & 1, 0, "sig should be valid");
 
@@ -312,6 +315,48 @@ contract PolicyValidatorTest is Test {
         vm.prank(stranger);
         vm.expectRevert(PolicyValidator.NotAccountOwner.selector);
         validator.forceRevoke(address(account));
+    }
+
+    function test_ForceRevokeWithSig_AnyRelayerCanSubmitOwnersSignature() public {
+        uint256 signingOwnerPk = 0xC0FFEE;
+        address signingOwner = vm.addr(signingOwnerPk);
+
+        MockSessionAccount freshAccount = new MockSessionAccount(address(validator));
+        freshAccount.install(
+            abi.encode(signingOwner, sessionKey, validAfter, validUntil, NATIVE_CAP, MAX_TX, address(0), bytes4(0))
+        );
+
+        bytes32 digest = MessageHashUtils.toEthSignedMessageHash(
+            keccak256(abi.encodePacked("VOID_REVOKE", block.chainid, address(freshAccount)))
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(signingOwnerPk, digest);
+        bytes memory ownerSig = abi.encodePacked(r, s, v);
+
+        address randomRelayer = makeAddr("random-relayer");
+        vm.prank(randomRelayer);
+        validator.forceRevokeWithSig(address(freshAccount), ownerSig);
+
+        assertTrue(validator.isRevoked(address(freshAccount)));
+    }
+
+    function test_RevertWhen_ForceRevokeWithSig_WrongSigner() public {
+        uint256 signingOwnerPk = 0xC0FFEE;
+        address signingOwner = vm.addr(signingOwnerPk);
+        uint256 attackerPk = 0xBAD;
+
+        MockSessionAccount freshAccount = new MockSessionAccount(address(validator));
+        freshAccount.install(
+            abi.encode(signingOwner, sessionKey, validAfter, validUntil, NATIVE_CAP, MAX_TX, address(0), bytes4(0))
+        );
+
+        bytes32 digest = MessageHashUtils.toEthSignedMessageHash(
+            keccak256(abi.encodePacked("VOID_REVOKE", block.chainid, address(freshAccount)))
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(attackerPk, digest);
+        bytes memory badSig = abi.encodePacked(r, s, v);
+
+        vm.expectRevert(PolicyValidator.NotAccountOwner.selector);
+        validator.forceRevokeWithSig(address(freshAccount), badSig);
     }
 
     // ── signature handling ────────────────────────────────────────────────────
