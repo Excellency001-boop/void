@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { explorerAddressUrl, explorerTxUrl } from "@/lib/config";
 import { truncateAddress } from "@/lib/format";
@@ -30,6 +33,48 @@ export function AddressLink({ address, chars = 4 }: { address: string; chars?: n
     >
       {truncateAddress(address, chars)}
     </a>
+  );
+}
+
+export function CopyButton({ value, className = "" }: { value: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        navigator.clipboard.writeText(value);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1200);
+      }}
+      title="Copy to clipboard"
+      className={`text-void-dim hover:text-void-text ${className}`}
+    >
+      {copied ? (
+        <span className="text-[10px] text-void-accent">copied</span>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="9" y="9" width="13" height="13" rx="1.5" />
+          <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+export function CopyableAddress({
+  address,
+  chars = 4,
+  className = "",
+}: {
+  address: string;
+  chars?: number;
+  className?: string;
+}) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <AddressLink address={address} chars={chars} />
+      <CopyButton value={address} />
+    </span>
   );
 }
 

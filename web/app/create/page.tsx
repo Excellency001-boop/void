@@ -6,7 +6,7 @@ import { useAccount } from "wagmi";
 import { isAddress, toFunctionSelector, type Hex } from "viem";
 import { api, ApiError, type CreateVaultResult } from "@/lib/api";
 import { ethToWei } from "@/lib/format";
-import { Card, PrimaryButton, SecondaryButton, Label, BackLink, TxLink } from "@/components/ui";
+import { Card, PrimaryButton, SecondaryButton, Label, BackLink, TxLink, CopyButton } from "@/components/ui";
 
 const DURATIONS = [
   { label: "1 hour", seconds: 3600 },
@@ -261,8 +261,9 @@ function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <Label>{label}</Label>
-      <div className="mt-1 truncate rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text">
-        {value}
+      <div className="mt-1 flex items-center gap-2 rounded-sm border border-void-border bg-void-raised px-3 py-2">
+        <span className="flex-1 truncate font-mono text-xs text-void-text">{value}</span>
+        <CopyButton value={value} />
       </div>
     </div>
   );

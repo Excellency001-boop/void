@@ -12,6 +12,7 @@ import {
   Badge,
   BudgetBar,
   AddressLink,
+  CopyableAddress,
   TxLink,
   BackLink,
   SecondaryButton,
@@ -69,11 +70,13 @@ export default function VaultDetailPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-mono text-xl text-void-text">
-            <AddressLink address={s.vaultAddress} chars={6} />
+            <CopyableAddress address={s.vaultAddress} chars={6} />
           </h1>
-          <p className="mt-1 text-xs text-void-muted">
-            owner <AddressLink address={s.owner} /> · session key{" "}
-            <AddressLink address={s.sessionKeyAddress} />
+          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-void-muted">
+            <span>owner</span>
+            <CopyableAddress address={s.owner} />
+            <span>· session key</span>
+            <CopyableAddress address={s.sessionKeyAddress} />
           </p>
         </div>
         <Badge tone={tone}>{s.revoked ? "Revoked" : s.expired ? "Expired" : "Active"}</Badge>
