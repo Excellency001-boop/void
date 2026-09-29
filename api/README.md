@@ -62,14 +62,45 @@ custody story, and that guarantee holds regardless of which side does the signin
 | POST | `/agent/simulate` | Builds the real UserOp, signs it, replays `PolicyValidator.validateUserOp` via `eth_call` with `account` spoofed to the vault. Returns `allowed`, the decoded revert if not, and a transparent risk score. |
 | POST | `/agent/execute` | Same UserOp, submitted for real. Returns `success`, the real `txHash` either way, and the decoded revert (unwrapped from EntryPoint's `FailedOpWithRevert`) on rejection. |
 
-## Verified end-to-end (local Anvil)
+## Verified end-to-end — local Anvil, then real Base Sepolia
 
 Every route above has been exercised against a live chain, not just typechecked: vault creation,
 funding, a legal `mint()` action simulated then executed (real tx, `ActionValidated` in history,
 `txCount` incremented), an illegal action on a never-whitelisted target both simulated (`allowed:
 false`, decoded `TargetSelectorNotAllowed`) and executed (real mined-and-reverted transaction,
 `txCount` unchanged), a gasless owner-signed revoke, and confirmation that a previously-legal
-action is rejected (`SessionRevoked`) immediately afterward.
+action is rejected (`SessionRevoked`) immediately afterward. First proven on local Anvil, then
+repeated in full on live Base Sepolia (chain 84532) — see `contracts/deployments/84532.json` for
+the deployed addresses and the transactions below on [Basescan](https://sepolia.basescan.org):
+
+| Step | Tx |
+|---|---|
+| Legal `mint()` action | [`0xa49dca09...b0f2de7`](https://sepolia.basescan.org/tx/0xa49dca097daa01dabe7dd6fcea206a4277ab176f16c9402d707a9eb15b0f2de7) — succeeded |
+| Illegal action (never-whitelisted target) | [`0x9d1a7b2e...be06993d`](https://sepolia.basescan.org/tx/0x9d1a7b2eb23e72e910bb4a2c30b50dd42c2838436395b9c69bbc9d93be06993d) — real mined-and-reverted transaction, `TargetSelectorNotAllowed` |
+| Gasless owner-signed revoke | [`0x4970f530...80e7afeb`](https://sepolia.basescan.org/tx/0x4970f530e05c1ba4c30ffeeedd6f58a2142847729d93dfde8e6f2ddffd6dfd7a) |
+
+Deploying to Base Sepolia surfaced three real bugs, all fixed (see git history for
+`scripts/deploy.ts`, `src/vaults.ts`, `src/agentActions.ts`):
+
+- **`scripts/deploy.ts` hardcoded the local Anvil chain object** regardless of `RPC_URL`/`CHAIN_ID`
+  — transactions were signed with the wrong chain ID baked in, so Base Sepolia (correctly)
+  rejected them as `invalid chain ID`. Fixed by resolving the live chain from `eth_chainId` before
+  building any client.
+- **Public RPC replica inconsistency** on back-to-back writes: automatic gas estimation and
+  automatic nonce lookup would occasionally land on a load-balanced replica that hadn't caught up
+  on the immediately-preceding transaction, surfacing as a spurious constructor revert once and
+  `"replacement transaction underpriced"` another time. Fixed by tracking nonces locally instead of
+  re-querying per call, and using explicit gas limits instead of `eth_estimateGas`. The same class
+  of staleness showed up a third time as `"block not found"` when re-simulating a failed
+  transaction pinned to its exact block number — fixed by using `"latest"` instead, since nothing
+  relevant changes between a failed (non-state-mutating) call and now.
+- **`getVaultHistory` scanned from block 0** — fine on a brand-new local Anvil chain, but exceeds
+  this RPC's 50,000-block `eth_getLogs` range limit on a real, long-lived testnet. Fixed by
+  recording each vault's actual deployment block at creation time and scanning from there.
+
+None of these were contract bugs — `PolicyValidator`'s logic behaved identically on both chains.
+They were all in the deployment/RPC-interaction layer, which is exactly the kind of thing that
+only surfaces once you leave a clean local Anvil instance for a real network.
 
 ## What's next
 

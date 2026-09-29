@@ -76,7 +76,7 @@ export async function createVault(params: CreateVaultParams): Promise<CreateVaul
     functionName: "createAccount",
     args: [initData, salt],
   });
-  await publicClient.waitForTransactionReceipt({ hash: deployTxHash });
+  const deployReceipt = await publicClient.waitForTransactionReceipt({ hash: deployTxHash });
 
   const record: VaultRecord = {
     vaultAddress,
@@ -84,6 +84,7 @@ export async function createVault(params: CreateVaultParams): Promise<CreateVaul
     sessionKeyAddress,
     createdAt: new Date().toISOString(),
     deployTxHash,
+    deployBlockNumber: deployReceipt.blockNumber.toString(),
     policy: {
       validAfter,
       validUntil,
@@ -152,13 +153,31 @@ export interface HistoryEntry {
   transactionHash: Hex;
 }
 
+// Most public RPCs cap eth_getLogs to a bounded block range (this deployment's Base Sepolia
+// endpoint caps at 50,000). Scanning from genesis works on a brand-new local Anvil chain but
+// breaks immediately on any real, long-lived chain.
+const MAX_LOG_RANGE = 40_000n;
+
 export async function getVaultHistory(vaultAddress: Address): Promise<HistoryEntry[]> {
+  // Prefer the vault's actual deployment block — recorded at creation time — over guessing a
+  // bounded lookback window; it's both correct (no missed history) and cheaper to query. Vaults
+  // this API instance didn't create (or created before this field existed) fall back to the most
+  // recent MAX_LOG_RANGE blocks, which may miss older activity.
+  const known = getVault(vaultAddress);
+  let fromBlock: bigint;
+  if (known?.deployBlockNumber) {
+    fromBlock = BigInt(known.deployBlockNumber);
+  } else {
+    const latest = await publicClient.getBlockNumber();
+    fromBlock = latest > MAX_LOG_RANGE ? latest - MAX_LOG_RANGE : 0n;
+  }
+
   const logs = await publicClient.getContractEvents({
     address: config.deployment.policyValidator as Address,
     abi: policyValidatorAbi,
     eventName: "ActionValidated",
     args: { account: vaultAddress },
-    fromBlock: 0n,
+    fromBlock,
     toBlock: "latest",
   });
 

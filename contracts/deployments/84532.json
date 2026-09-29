@@ -1,0 +1,8 @@
+{
+  "chainId": 84532,
+  "entryPoint": "0x97d397cc0ee38981bed42482f4353b7bc1566a41",
+  "kernelImpl": "0x303c7652ee111d50177c8f39f5223f25f4d6078b",
+  "kernelFactory": "0xe0878f58b5852e7bc79cc3900331a869a5d2b736",
+  "ecdsaValidator": "0xb76b4dd6639f422276241cf0d1c5b33bfabb26d6",
+  "policyValidator": "0x0383157dd47002e2d5ebe621cd84dfd3a418f422"
+}

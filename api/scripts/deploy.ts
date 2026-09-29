@@ -1,9 +1,11 @@
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { createPublicClient, createWalletClient, http, type Address } from "viem";
+import { createPublicClient, createWalletClient, http, defineChain, type Address, type Chain } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { foundry } from "viem/chains";
+import { foundry, baseSepolia, arbitrumSepolia } from "viem/chains";
+
+const KNOWN_CHAINS: Chain[] = [foundry, baseSepolia, arbitrumSepolia];
 
 /// Deploys VOID's fixed shared infrastructure to a chain: a real ERC-4337 v0.7 EntryPoint, a real
 /// Kernel v3.3 implementation + factory, a real ECDSAValidator, and our own PolicyValidator
@@ -33,16 +35,41 @@ function loadArtifact(sourceFile: string, contractName: string) {
 }
 
 async function main() {
-  const account = privateKeyToAccount(DEPLOYER_KEY);
-  const publicClient = createPublicClient({ chain: foundry, transport: http(RPC_URL) });
-  const walletClient = createWalletClient({ account, chain: foundry, transport: http(RPC_URL) });
+  // Resolve the real chain BEFORE building any client — a client built with the wrong `chain`
+  // will happily sign transactions with the wrong chain ID baked in, which every real RPC (unlike
+  // permissive local Anvil) rejects outright as "invalid chain ID". Query it directly rather than
+  // trusting CHAIN_ID env to match what RPC_URL actually points at.
+  const probe = createPublicClient({ transport: http(RPC_URL) });
+  const liveChainId = await probe.getChainId();
+  const chain: Chain =
+    KNOWN_CHAINS.find((c) => c.id === liveChainId) ??
+    defineChain({
+      id: liveChainId,
+      name: `chain-${liveChainId}`,
+      nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+      rpcUrls: { default: { http: [RPC_URL] } },
+    });
 
-  const chainId = await publicClient.getChainId();
-  console.log(`Deploying to chain ${chainId} via ${RPC_URL} as ${account.address}`);
+  const account = privateKeyToAccount(DEPLOYER_KEY);
+  const publicClient = createPublicClient({ chain, transport: http(RPC_URL) });
+  const walletClient = createWalletClient({ account, chain, transport: http(RPC_URL) });
+
+  const chainId = liveChainId;
+  console.log(`Deploying to chain ${chainId} (${chain.name}) via ${RPC_URL} as ${account.address}`);
+
+  // Explicit, locally-tracked nonce rather than letting viem ask the RPC for "next nonce" before
+  // each call: on a load-balanced public RPC, back-to-back deployments can have that lookup land
+  // on a replica that hasn't yet seen the previous transaction, handing out a nonce that's already
+  // in use and producing "replacement transaction underpriced". Fetching once and incrementing
+  // ourselves removes the dependency on replica consistency entirely. The same class of staleness
+  // was also showing up as apparent "execution reverted" on a constructor referencing a
+  // just-deployed address (confirmed present via a direct eth_getCode) — fixed the same way, by
+  // not asking the RPC to estimate/re-derive anything mid-sequence.
+  let nonce = await publicClient.getTransactionCount({ address: account.address, blockTag: "pending" });
 
   async function deploy(sourceFile: string, contractName: string, args: unknown[] = []): Promise<Address> {
     const { abi, bytecode } = loadArtifact(sourceFile, contractName);
-    const hash = await walletClient.deployContract({ abi, bytecode, args });
+    const hash = await walletClient.deployContract({ abi, bytecode, args, gas: 6_000_000n, nonce: nonce++ });
     const receipt = await publicClient.waitForTransactionReceipt({ hash });
     if (!receipt.contractAddress) throw new Error(`${contractName} deployment produced no address`);
     console.log(`  ${contractName}: ${receipt.contractAddress}`);

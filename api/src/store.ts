@@ -6,6 +6,7 @@ export interface VaultRecord {
   sessionKeyAddress: Address;
   createdAt: string;
   deployTxHash: Hex;
+  deployBlockNumber: string;
   policy: {
     validAfter: number;
     validUntil: number;

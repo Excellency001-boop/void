@@ -193,8 +193,12 @@ export async function executeAction(input: ActionInput): Promise<ExecuteResult> 
     return { success: true, txHash, userOpHash };
   }
 
-  // Mined but reverted. Re-run the identical call read-only at that block to recover a decoded
-  // reason for the response, while still reporting the real (failed) txHash as proof it landed.
+  // Mined but reverted. Re-run the identical call read-only to recover a decoded reason for the
+  // response, while still reporting the real (failed) txHash as proof it landed. Deliberately NOT
+  // pinned to `receipt.blockNumber`: some load-balanced public RPCs (this project's Base Sepolia
+  // endpoint included) will happily mine a block on one replica and then 404 "block not found"
+  // when a *different* replica answers a call pinned to that exact number moments later. Nothing
+  // relevant changes between the failed tx and "latest" here — this call didn't mutate state.
   let revert: RevertInfo | undefined;
   try {
     await publicClient.simulateContract({
@@ -202,7 +206,6 @@ export async function executeAction(input: ActionInput): Promise<ExecuteResult> 
       abi: entryPointAbi,
       functionName: "handleOps",
       args: [[signedOp], relayerClient.account.address],
-      blockNumber: receipt.blockNumber,
     });
   } catch (err) {
     revert = decodeRevert(err);
