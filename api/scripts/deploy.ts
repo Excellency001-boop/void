@@ -83,12 +83,17 @@ async function main() {
   const policyValidator = await deploy("PolicyValidator.sol", "PolicyValidator");
 
   const deployment = { chainId, entryPoint, kernelImpl, kernelFactory, ecdsaValidator, policyValidator };
+  const deploymentJson = JSON.stringify(deployment, null, 2);
 
-  const outDir = path.join(CONTRACTS_DIR, "deployments");
-  mkdirSync(outDir, { recursive: true });
-  const outPath = path.join(outDir, `${chainId}.json`);
-  writeFileSync(outPath, JSON.stringify(deployment, null, 2));
-  console.log(`\nWrote ${outPath}`);
+  // Written to both locations: contracts/deployments/ is the canonical record alongside the
+  // source; api/deployments/ is what the API actually reads at runtime, kept self-contained so
+  // the API is deployable on its own without the rest of the monorepo present (see config.ts).
+  for (const dir of [path.join(CONTRACTS_DIR, "deployments"), path.resolve(__dirname, "../deployments")]) {
+    mkdirSync(dir, { recursive: true });
+    const outPath = path.join(dir, `${chainId}.json`);
+    writeFileSync(outPath, deploymentJson);
+    console.log(`Wrote ${outPath}`);
+  }
 }
 
 main().catch((err) => {

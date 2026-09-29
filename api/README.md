@@ -22,6 +22,38 @@ directly and doesn't hit it. The deploy script is easy to swap for a real `forge
 that combination gets fixed upstream, or to point at a chain where someone else already deployed
 the shared infra.
 
+## Self-contained by design
+
+ABIs are vendored as plain JSON under `src/abi/generated/` (extraction command below) and the
+active deployment record is copied into `deployments/<chainId>.json`, both committed — the API
+never reads from `contracts/out/` or `contracts/deployments/` at runtime, only as a local-dev
+fallback. That's what makes it deployable on its own (see Railway below) without the rest of the
+monorepo, or a Foundry toolchain, present at all.
+
+```bash
+# Regenerate after a real contract change (from contracts/):
+python3 -c "
+import json, os
+files = [('out/PolicyValidator.sol/PolicyValidator.json', 'policyValidator.json'),
+          ('out/Kernel.sol/Kernel.json', 'kernel.json'),
+          ('out/KernelFactory.sol/KernelFactory.json', 'kernelFactory.json'),
+          ('out/ECDSAValidator.sol/ECDSAValidator.json', 'ecdsaValidator.json'),
+          ('out/EntryPoint.sol/EntryPoint.json', 'entryPoint.json')]
+for src, dst in files:
+    json.dump(json.load(open(src))['abi'], open(f'../api/src/abi/generated/{dst}', 'w'))
+"
+```
+
+## Deployed
+
+Live on Railway: https://void-api-production-fc5e.up.railway.app (check `/health`). Deployed via
+`railway up`, with `RPC_URL` / `CHAIN_ID` / `RELAYER_PRIVATE_KEY` set as service variables — no
+`.env` file involved in production. Railway injects its own `PORT`; the app already binds to
+whatever `config.PORT` resolves to on `0.0.0.0`, so nothing app-side needs to change between local
+and hosted. If re-deploying to a fresh service, remember to set the domain's target port to match
+whatever Railway actually assigned (`railway domain update <domain> --port <port>`) — the
+auto-generated domain doesn't infer this automatically and a mismatch reads as a generic 502.
+
 ## Why self-relay instead of a bundler
 
 VOID's own relayer submits every UserOp directly to `EntryPoint.handleOps`, rather than going

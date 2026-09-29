@@ -11,6 +11,20 @@ cp .env.local.example .env.local   # point at your running api/ instance
 npm run dev
 ```
 
+## Deployed
+
+Live on Vercel: https://web-xi-one-8jpius867x.vercel.app, pointed at the live Railway API via
+`NEXT_PUBLIC_API_URL` set as a **production** environment variable (Next.js bakes `NEXT_PUBLIC_*`
+vars in at build time — set them before deploying, or trigger a rebuild after). Deployed with
+`vercel --prod`.
+
+One thing to know if re-aliasing: the auto-assigned production domain
+(`<project>-<hash>.vercel.app`) is public by default, but custom aliases created afterward via
+`vercel alias set` land behind Vercel's SSO deployment protection on this account and redirect to
+a login page — confirmed by testing, not assumed. Stick with the auto-assigned production domain
+for anything that needs to be publicly viewable without a Vercel account, or disable deployment
+protection for the project first if a custom domain is worth the extra step.
+
 Requires `api/` running and reachable at `NEXT_PUBLIC_API_URL` (defaults to
 `http://localhost:4000`), which in turn requires `contracts/deployments/<chainId>.json` to exist
 — see the root README and `api/README.md` for the full chain of setup.

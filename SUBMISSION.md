@@ -97,7 +97,8 @@ on Basescan — then try one *inside* the policy and watch it succeed.
 [your name / handle]
 
 ## Links
-- Live dashboard: [PASTE DEPLOYED URL]
+- Live dashboard: https://web-xi-one-8jpius867x.vercel.app
+- Live API: https://void-api-production-fc5e.up.railway.app/health
 - GitHub: [PASTE REPO URL]
 - Video: [PASTE VIDEO URL — see DEMO_SCRIPT.md]
 - PolicyValidator on Basescan: https://sepolia.basescan.org/address/0x0383157dd47002e2d5ebe621cd84dfd3a418f422

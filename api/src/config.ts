@@ -5,6 +5,7 @@ import { z } from "zod";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTRACTS_DIR = path.resolve(__dirname, "../../contracts");
+const LOCAL_DEPLOYMENTS_DIR = path.resolve(__dirname, "../deployments");
 
 // Anvil's well-known default account #0 — deterministic from the standard "test test test ...
 // junk" mnemonic every `anvil` instance boots with. Safe to hardcode because it is, by
@@ -37,17 +38,28 @@ const deploymentSchema = z.object({
 });
 
 function loadDeployment() {
-  const filePath = path.join(CONTRACTS_DIR, "deployments", `${env.CHAIN_ID}.json`);
-  let raw: string;
-  try {
-    raw = readFileSync(filePath, "utf-8");
-  } catch {
-    throw new Error(
-      `No deployment file at ${filePath}. Run \`npm run deploy:local\` (or the equivalent for ` +
-        `your target chain) before starting the API.`
-    );
+  // Prefer the copy vendored inside api/ — this is what makes the API deployable on its own
+  // (Railway, etc.) without the rest of the monorepo checked out. Fall back to the shared
+  // contracts/deployments/ file for local dev, so a fresh `npm run deploy:local` there is picked
+  // up without needing to remember to copy it over every time.
+  const candidates = [
+    path.join(LOCAL_DEPLOYMENTS_DIR, `${env.CHAIN_ID}.json`),
+    path.join(CONTRACTS_DIR, "deployments", `${env.CHAIN_ID}.json`),
+  ];
+  for (const filePath of candidates) {
+    try {
+      const raw = readFileSync(filePath, "utf-8");
+      return deploymentSchema.parse(JSON.parse(raw));
+    } catch (err) {
+      if (err instanceof Error && "code" in err && err.code === "ENOENT") continue;
+      throw err;
+    }
   }
-  return deploymentSchema.parse(JSON.parse(raw));
+  throw new Error(
+    `No deployment file for chain ${env.CHAIN_ID} in ${LOCAL_DEPLOYMENTS_DIR} or ` +
+      `${CONTRACTS_DIR}/deployments. Run \`npm run deploy:local\` (or the equivalent for your ` +
+      `target chain) first, or copy an existing deployments/<chainId>.json into api/deployments/.`
+  );
 }
 
 export const config = {

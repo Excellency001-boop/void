@@ -5,7 +5,8 @@ transaction in this script is real, not simulated for the camera. Fallback proof
 transactions from earlier testing) is listed at the bottom in case anything needs a backup shot.
 
 Chain: **Base Sepolia**. PolicyValidator: `0x0383157dd47002e2d5ebe621cd84dfd3a418f422`. Dashboard:
-`localhost:3939` (or wherever it's deployed by recording time).
+**https://web-xi-one-8jpius867x.vercel.app** (Railway-hosted API behind it — nothing local needed
+to record this).
 
 ---
 
@@ -137,8 +138,10 @@ All viewable at `https://sepolia.basescan.org/tx/<hash>`.
 
 ## Recording checklist
 
-- [ ] API running and pointed at Base Sepolia (`api/.env`), relayer funded with test ETH
-- [ ] Dashboard running (`web/`), `NEXT_PUBLIC_API_URL` pointed at the API
+- [ ] Both live: dashboard at https://web-xi-one-8jpius867x.vercel.app, API at
+      https://void-api-production-fc5e.up.railway.app/health (check it returns `"status":"ok"`)
+- [ ] Railway relayer still funded with Base Sepolia test ETH (`railway logs --service void-api`
+      to check for AA21/prefund errors if something looks off)
 - [ ] A funded owner wallet ready to connect (for the revoke-signing beat)
 - [ ] A whitelisted target contract + function decided in advance and deployed
 - [ ] Do one full silent dry-run first — Base Sepolia confirmation times vary; know how long to
