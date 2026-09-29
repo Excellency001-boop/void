@@ -11,6 +11,7 @@ contracts/.env
 **/dist/
 **/.turbo/
 *.log
+*.tsbuildinfo
 
 # Env / secrets
 .env
