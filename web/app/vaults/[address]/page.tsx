@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError } from "@/lib/api";
@@ -24,6 +24,7 @@ import { AgentConsole } from "@/components/AgentConsole";
 
 export default function VaultDetailPage() {
   const { address } = useParams<{ address: string }>();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { network, api } = useNetwork();
 
@@ -151,7 +152,13 @@ export default function VaultDetailPage() {
         </div>
       </Card>
 
-      <AgentConsole vaultAddress={s.vaultAddress} />
+      <div id="console" className="scroll-mt-8">
+        <AgentConsole
+          vaultAddress={s.vaultAddress}
+          initialSessionKey={searchParams.get("sessionKey") ?? ""}
+          initialTarget={searchParams.get("target") ?? ""}
+        />
+      </div>
     </div>
   );
 }

@@ -52,7 +52,7 @@ export function CopyButton({ value, className = "" }: { value: string; className
       className={`text-void-dim hover:text-void-text ${className}`}
     >
       {copied ? (
-        <span className="text-[10px] text-void-accent">copied</span>
+        <span className="text-[10px] text-void-success">copied</span>
       ) : (
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="9" y="9" width="13" height="13" rx="1.5" />

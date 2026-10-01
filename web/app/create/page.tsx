@@ -6,8 +6,14 @@ import { useAccount } from "wagmi";
 import { isAddress, toFunctionSelector, type Hex } from "viem";
 import { ApiError, type CreateVaultResult } from "@/lib/api";
 import { useNetwork } from "@/lib/network-context";
+import { explorerAddressUrl } from "@/lib/networks";
 import { ethToWei } from "@/lib/format";
 import { Card, PrimaryButton, SecondaryButton, Label, BackLink, TxLink, CopyButton } from "@/components/ui";
+
+/// A deliberately not-whitelisted address — clicking the post-deploy "simulate a rejection" CTA
+/// pre-fills this as the target so the very first click produces a real on-chain rejection, not an
+/// empty form the user has to figure out what to type into.
+const UNAUTHORIZED_DEMO_TARGET = "0x00000000000000000000000000000000deadbeef";
 
 const DURATIONS = [
   { label: "1 hour", seconds: 3600 },
@@ -18,7 +24,7 @@ const DURATIONS = [
 
 export default function CreateVaultPage() {
   const { address } = useAccount();
-  const { api } = useNetwork();
+  const { api, network } = useNetwork();
 
   const [owner, setOwner] = useState("");
   const [duration, setDuration] = useState(86400);
@@ -72,59 +78,85 @@ export default function CreateVaultPage() {
   }
 
   if (result) {
+    const simulateHref = `/vaults/${result.vaultAddress}?sessionKey=${result.sessionPrivateKey}&target=${UNAUTHORIZED_DEMO_TARGET}#console`;
+
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-6">
         <div>
           <BackLink href="/">Back to vaults</BackLink>
         </div>
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-void-success">Session Vault deployed</h2>
-          <p className="mt-1 text-sm text-void-muted">
-            Real transaction, real contract, live on-chain now.
-          </p>
 
-          <div className="mt-5 flex flex-col gap-4">
-            <Field label="Vault address" value={result.vaultAddress} />
-            <Field label="Session key address" value={result.sessionKeyAddress} />
-
-            <div>
-              <Label>Session private key — shown once</Label>
-              <p className="mt-1 text-xs text-void-warn">
-                This API does not store this key anywhere. Copy it now and hand it to your agent —
-                if you lose it, the session can no longer act (you can still force-revoke and your
-                funds are untouched either way).
-              </p>
-              <div className="mt-2 flex items-center gap-2">
-                <code className="flex-1 truncate rounded-sm border border-void-warn/30 bg-void-warnDim/10 px-3 py-2 font-mono text-xs text-void-text">
-                  {result.sessionPrivateKey}
-                </code>
-                <SecondaryButton
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(result.sessionPrivateKey);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1500);
-                  }}
-                >
-                  {copied ? "Copied" : "Copy"}
-                </SecondaryButton>
-              </div>
-            </div>
-
-            <div className="text-xs text-void-muted">
-              Deployment: <TxLink hash={result.deployTxHash} />
-            </div>
+        <div className="flex items-start gap-3.5">
+          <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-void-successDim">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-void-success">
+              <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <div>
+            <h1 className="text-xl font-semibold text-void-text">Session vault deployed</h1>
+            <p className="mt-1 text-sm text-void-muted">
+              Live on-chain now. The policy you just set is enforced by the contract, not by any
+              app — including this one.
+            </p>
           </div>
+        </div>
 
-          <div className="mt-6 flex gap-3">
-            <Link href={`/vaults/${result.vaultAddress}`}>
-              <PrimaryButton>Go to vault</PrimaryButton>
-            </Link>
-            <Link href="/">
-              <SecondaryButton type="button">Back home</SecondaryButton>
-            </Link>
+        <Card className="flex flex-col gap-4 p-5">
+          <Field label="Vault address" value={result.vaultAddress} />
+          <div className="text-xs">
+            <a
+              href={explorerAddressUrl(network, result.vaultAddress)}
+              target="_blank"
+              rel="noreferrer"
+              className="text-void-accent underline decoration-void-accentDim underline-offset-2 hover:decoration-void-accent"
+            >
+              View on {network.name} explorer ↗
+            </a>
+            <span className="mx-2 text-void-dim">·</span>
+            <TxLink hash={result.deployTxHash} label="deployment tx" />
           </div>
         </Card>
+
+        <Card className="flex flex-col gap-3 border-void-warn/25 bg-void-warnDim/10 p-5">
+          <div>
+            <Label>Session private key — shown once, never stored</Label>
+            <p className="mt-1.5 text-xs leading-relaxed text-void-muted">
+              Give this to your agent. It signs with this key, but can never produce a valid
+              signature for anything outside the policy above — the contract rejects it, not your
+              code. Copy it now; if it's lost, force-revoke still works and your funds are
+              untouched either way.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 truncate rounded-sm border border-void-warn/30 bg-void-raised px-3 py-2 font-mono text-xs text-void-text">
+              {result.sessionPrivateKey}
+            </code>
+            <SecondaryButton
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(result.sessionPrivateKey);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+            >
+              {copied ? "Copied" : "Copy"}
+            </SecondaryButton>
+          </div>
+        </Card>
+
+        <div className="flex flex-col gap-3">
+          <Link href={simulateHref}>
+            <PrimaryButton className="w-full">Simulate a rejected action →</PrimaryButton>
+          </Link>
+          <div className="flex gap-3">
+            <Link href={`/vaults/${result.vaultAddress}`} className="flex-1">
+              <SecondaryButton type="button" className="w-full">
+                View vault
+              </SecondaryButton>
+            </Link>
+            <ShareLinkButton vaultAddress={result.vaultAddress} />
+          </div>
+        </div>
       </div>
     );
   }
@@ -145,7 +177,9 @@ export default function CreateVaultPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <Card className="flex flex-col gap-4 p-5">
+        <div>
+          <Label className="mb-2.5">Policy</Label>
+          <Card className="flex flex-col gap-4 p-5">
           <div>
             <Label>Owner address</Label>
             <div className="mt-1 flex gap-2">
@@ -162,12 +196,12 @@ export default function CreateVaultPage() {
               )}
             </div>
             <p className="mt-1 text-xs text-void-dim">
-              Retains full control at all times via its own root key — force-revoke, withdraw,
-              reconfigure. The session key can never do more than this policy allows.
+              Keeps full control via its own root key. The session key can never exceed this
+              policy.
             </p>
           </div>
 
-          <div>
+          <div className="border-t border-void-border pt-4">
             <Label>Session duration</Label>
             <div className="mt-1 flex flex-wrap gap-2">
               {DURATIONS.map((d) => (
@@ -187,7 +221,7 @@ export default function CreateVaultPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 border-t border-void-border pt-4">
             <div>
               <Label>Native spend cap (ETH)</Label>
               <input
@@ -208,17 +242,16 @@ export default function CreateVaultPage() {
               />
             </div>
           </div>
-        </Card>
+          </Card>
+        </div>
 
-        <Card className="flex flex-col gap-4 p-5">
-          <div>
-            <Label>Initial permission (optional but recommended)</Label>
-            <p className="mt-1 text-xs text-void-dim">
-              One contract + function the agent can call from its very first action. Kernel
-              installs the policy and authorizes this in the same transaction — see the README for
-              why that atomicity matters. You can grant more permissions later.
-            </p>
-          </div>
+        <div>
+          <Label className="mb-2.5">First permission (optional)</Label>
+          <Card className="flex flex-col gap-4 p-5">
+          <p className="text-xs text-void-dim">
+            One contract + function the agent can call immediately — installed atomically with the
+            policy. Add more permissions later.
+          </p>
           <div>
             <Label>Contract address</Label>
             <input
@@ -243,7 +276,8 @@ export default function CreateVaultPage() {
               </p>
             )}
           </div>
-        </Card>
+          </Card>
+        </div>
 
         {error && (
           <div className="rounded-sm border border-void-danger/30 bg-void-dangerDim/10 px-4 py-3 text-sm text-void-danger">
@@ -256,6 +290,23 @@ export default function CreateVaultPage() {
         </PrimaryButton>
       </form>
     </div>
+  );
+}
+
+function ShareLinkButton({ vaultAddress }: { vaultAddress: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <SecondaryButton
+      type="button"
+      className="flex-1"
+      onClick={() => {
+        navigator.clipboard.writeText(`${window.location.origin}/vaults/${vaultAddress}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+    >
+      {copied ? "Link copied" : "Copy share link"}
+    </SecondaryButton>
   );
 }
 

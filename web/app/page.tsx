@@ -109,7 +109,7 @@ export default function HomePage() {
           </form>
         </div>
 
-        <Label className="mt-6">Created this session</Label>
+        <Label className="mt-8 border-t border-void-border pt-8">Created this session</Label>
         <p className="mb-4 mt-1 text-xs text-void-dim">
           This list is a convenience index kept in the API's memory, not the source of truth —
           it resets when the API restarts. Every vault's real status always lives on-chain; paste
@@ -125,12 +125,35 @@ export default function HomePage() {
         )}
 
         {vaultsQuery.data && vaultsQuery.data.length === 0 && (
-          <div className="rounded-sm border border-dashed border-void-border px-4 py-8 text-center text-sm text-void-dim">
-            No vaults created yet in this session.
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-void-border px-6 py-14 text-center">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 40 40"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-void-dim"
+            >
+              <path d="M20 4 34 10v9c0 9-6 14-14 17-8-3-14-8-14-17v-9Z" />
+              <rect x="15" y="18" width="10" height="8" rx="1.5" />
+              <path d="M17.5 18v-3a2.5 2.5 0 0 1 5 0v3" />
+            </svg>
+            <p className="text-sm text-void-muted">
+              Your vaults will show up here — create one above to get started.
+            </p>
+            <a
+              href="#pipeline"
+              className="text-xs text-void-accent underline decoration-void-accentDim underline-offset-2 hover:decoration-void-accent"
+            >
+              Or see it reject a transaction first ↑
+            </a>
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {vaultsQuery.data?.map((v) => {
             const remaining = Number(v.policy.validUntil) - Math.floor(Date.now() / 1000);
             return (

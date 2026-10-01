@@ -19,10 +19,18 @@ interface LogEntry {
 
 let logId = 0;
 
-export function AgentConsole({ vaultAddress }: { vaultAddress: string }) {
+export function AgentConsole({
+  vaultAddress,
+  initialSessionKey = "",
+  initialTarget = "",
+}: {
+  vaultAddress: string;
+  initialSessionKey?: string;
+  initialTarget?: string;
+}) {
   const { api } = useNetwork();
-  const [sessionKey, setSessionKey] = useState("");
-  const [target, setTarget] = useState("");
+  const [sessionKey, setSessionKey] = useState(initialSessionKey);
+  const [target, setTarget] = useState(initialTarget);
   const [valueEth, setValueEth] = useState("0");
   const [calldata, setCalldata] = useState("0x");
   const [busy, setBusy] = useState<"simulate" | "execute" | null>(null);
