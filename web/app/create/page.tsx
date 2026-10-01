@@ -78,7 +78,7 @@ export default function CreateVaultPage() {
           <BackLink href="/">Back to vaults</BackLink>
         </div>
         <Card className="p-6">
-          <h2 className="text-lg font-semibold text-void-accent">Session Vault deployed</h2>
+          <h2 className="text-lg font-semibold text-void-success">Session Vault deployed</h2>
           <p className="mt-1 text-sm text-void-muted">
             Real transaction, real contract, live on-chain now.
           </p>

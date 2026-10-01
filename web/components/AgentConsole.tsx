@@ -5,6 +5,8 @@ import { isAddress, isHex } from "viem";
 import { ApiError, type ExecuteResult, type SimulateResult } from "@/lib/api";
 import { useNetwork } from "@/lib/network-context";
 import { Card, Label, PrimaryButton, SecondaryButton, TxLink } from "@/components/ui";
+import { PolicyPipeline } from "@/components/PolicyPipeline";
+import { computeGateStatuses, gateIndexForError, idleGateStatuses } from "@/lib/policyGates";
 
 interface LogEntry {
   id: number;
@@ -76,6 +78,20 @@ export function AgentConsole({ vaultAddress }: { vaultAddress: string }) {
     }
   }
 
+  const latest = log[0];
+  let pipelineStatuses = idleGateStatuses();
+  if (latest) {
+    if (latest.ok) {
+      pipelineStatuses = computeGateStatuses(undefined);
+    } else {
+      const blockedAt = gateIndexForError(latest.detail.revert?.errorName);
+      // A revert we can't map to a gate (e.g. a request/network failure, not an on-chain
+      // rejection) stays idle rather than rendering as "all gates cleared", which would read as
+      // success when nothing actually passed.
+      if (blockedAt !== undefined) pipelineStatuses = computeGateStatuses(blockedAt);
+    }
+  }
+
   return (
     <Card className="flex flex-col gap-4 p-5">
       <div>
@@ -86,6 +102,10 @@ export function AgentConsole({ vaultAddress }: { vaultAddress: string }) {
           not a guess. Execute submits the real UserOp; a rejection lands as a genuine
           mined-and-reverted transaction, not a silent drop.
         </p>
+      </div>
+
+      <div className="rounded-lg border border-void-border bg-void-bg px-5 py-6">
+        <PolicyPipeline statuses={pipelineStatuses} />
       </div>
 
       <div>
@@ -158,7 +178,7 @@ function LogRow({ entry }: { entry: LogEntry }) {
       <div className="flex items-center gap-2">
         <span className="text-void-dim">{entry.time}</span>
         <span className="text-void-muted">{isExecute ? "EXECUTE" : "SIMULATE"}</span>
-        <span className={entry.ok ? "text-void-accent" : "text-void-danger"}>{entry.summary}</span>
+        <span className={entry.ok ? "text-void-success" : "text-void-danger"}>{entry.summary}</span>
       </div>
 
       {"riskFactors" in detail && detail.riskFactors.length > 0 && (

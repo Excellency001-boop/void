@@ -1,9 +1,24 @@
 import type { Metadata } from "next";
+import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ConnectWalletButton } from "@/components/ConnectWalletButton";
 import { NetworkSwitcher } from "@/components/NetworkSwitcher";
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 const description =
   "Give an AI agent real economic agency without giving it the ability to rug you. Session Vaults compile a spending policy into an on-chain ERC-4337 validator — the agent can't produce a valid signature for anything outside it.";
@@ -25,7 +40,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${spaceGrotesk.variable} ${plexMono.variable}`}>
       <body className="min-h-screen font-sans text-void-text antialiased">
         <Providers>
           <div className="mx-auto flex min-h-screen max-w-6xl flex-col">

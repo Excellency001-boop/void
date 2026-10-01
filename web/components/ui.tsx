@@ -20,8 +20,8 @@ export function CardHeader({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function Label({ children }: { children: React.ReactNode }) {
-  return <div className="text-[11px] uppercase tracking-wider text-void-dim">{children}</div>;
+export function Label({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`text-[11px] uppercase tracking-wider text-void-dim ${className}`}>{children}</div>;
 }
 
 export function AddressLink({ address, chars = 4 }: { address: string; chars?: number }) {
@@ -97,7 +97,7 @@ export function TxLink({ hash, label = "tx" }: { hash: string; label?: string })
 type BadgeTone = "active" | "revoked" | "expired" | "warn" | "neutral";
 
 const toneClasses: Record<BadgeTone, string> = {
-  active: "border-void-accent/40 bg-void-accentDim/30 text-void-accent",
+  active: "border-void-success/40 bg-void-successDim/30 text-void-success",
   revoked: "border-void-danger/40 bg-void-dangerDim/30 text-void-danger",
   expired: "border-void-dim/40 bg-void-raised text-void-dim",
   warn: "border-void-warn/40 bg-void-warnDim/30 text-void-warn",
@@ -116,7 +116,7 @@ export function Badge({ tone, children }: { tone: BadgeTone; children: React.Rea
 
 export function BudgetBar({ pct, tone = "active" }: { pct: number; tone?: BadgeTone }) {
   const barColor =
-    tone === "revoked" ? "bg-void-danger" : tone === "warn" ? "bg-void-warn" : "bg-void-accent";
+    tone === "revoked" ? "bg-void-danger" : tone === "warn" ? "bg-void-warn" : "bg-void-success";
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-void-raised">
       <div

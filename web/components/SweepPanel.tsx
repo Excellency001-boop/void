@@ -28,7 +28,7 @@ export function SweepPanel({ vaultAddress, onSwept }: { vaultAddress: string; on
   const status = sweepQuery.data;
 
   if (txHash) {
-    return <p className="text-xs text-void-accent">Swept {weiToEthDisplay(sweptAmount)} ETH back to the owner.</p>;
+    return <p className="text-xs text-void-success">Swept {weiToEthDisplay(sweptAmount)} ETH back to the owner.</p>;
   }
 
   if (!status?.installed || !status.eligible || status.amountWei === "0") {

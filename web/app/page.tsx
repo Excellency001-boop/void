@@ -8,6 +8,7 @@ import { isAddress } from "viem";
 import { useNetwork } from "@/lib/network-context";
 import { truncateAddress, weiToEthDisplay, formatDuration } from "@/lib/format";
 import { Card, PrimaryButton, SecondaryButton, Label } from "@/components/ui";
+import { PipelineDemo } from "@/components/PipelineDemo";
 
 export default function HomePage() {
   const router = useRouter();
@@ -26,13 +27,70 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <section className="flex flex-col gap-3 border-b border-void-border pb-8">
-        <h1 className="text-2xl font-semibold text-void-text">Session Vaults</h1>
+    <div className="flex flex-col gap-20">
+      <section className="flex flex-col gap-6 pt-4">
+        <h1 className="max-w-3xl text-5xl font-bold leading-[1.1] tracking-tight text-void-text sm:text-6xl">
+          An agent can propose anything. The contract decides what&apos;s real.
+        </h1>
+        <p className="max-w-xl text-lg leading-relaxed text-void-muted">
+          VOID compiles a spending policy directly into an on-chain ERC-4337 validator. Outside
+          that policy there is no signature the agent&apos;s session key can produce that the
+          contract will accept — not a review step, a mathematical guarantee.
+        </p>
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <Link href="/create">
+            <PrimaryButton className="px-6 py-3 text-base">Create a session vault</PrimaryButton>
+          </Link>
+          <a
+            href="#pipeline"
+            className="inline-flex min-h-[44px] items-center rounded-sm border border-void-border px-6 py-3 text-base font-medium text-void-text transition hover:border-void-borderStrong"
+          >
+            Watch it reject a transaction ↓
+          </a>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 divide-y divide-void-border overflow-hidden rounded-lg border border-void-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="p-6">
+          <div className="font-mono text-3xl font-medium text-void-text">5</div>
+          <div className="mt-1.5 text-sm text-void-muted">
+            priority-ordered checks enforced on-chain, not in app code
+          </div>
+        </div>
+        <div className="p-6">
+          <div className="font-mono text-3xl font-medium text-void-text">2</div>
+          <div className="mt-1.5 text-sm text-void-muted">
+            live testnets — Base Sepolia and Arbitrum Sepolia
+          </div>
+        </div>
+        <div className="p-6">
+          <div className="font-mono text-3xl font-medium text-void-text">28</div>
+          <div className="mt-1.5 text-sm text-void-muted">
+            Foundry tests, including the negative-case proofs
+          </div>
+        </div>
+      </section>
+
+      <section id="pipeline" className="scroll-mt-8">
+        <div className="mb-8 max-w-2xl">
+          <div className="mb-2.5 font-mono text-xs uppercase tracking-wider text-void-accent">
+            Live mechanism
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight text-void-text sm:text-3xl">
+            Every action passes through five gates, in this exact order
+          </h2>
+          <p className="mt-2 text-sm text-void-muted">
+            This is PolicyValidator.validateUserOp, the real contract logic — not a simulation of
+            it. Try both paths.
+          </p>
+        </div>
+        <PipelineDemo />
+      </section>
+
+      <section className="flex flex-col gap-3 border-t border-void-border pt-10">
+        <h2 className="text-2xl font-semibold text-void-text">Session Vaults</h2>
         <p className="max-w-2xl text-sm leading-relaxed text-void-muted">
-          Each vault is a real ERC-4337 smart account with a spending policy compiled directly into
-          an on-chain validator. An agent holding the session key can only ever act within that
-          policy — the contract rejects anything else, no trust required.
+          Each vault is a real ERC-4337 smart account with this policy compiled directly into it.
         </p>
         <div className="flex flex-wrap items-center gap-3 pt-2">
           <Link href="/create">
@@ -50,10 +108,8 @@ export default function HomePage() {
             </SecondaryButton>
           </form>
         </div>
-      </section>
 
-      <section>
-        <Label>Created this session</Label>
+        <Label className="mt-6">Created this session</Label>
         <p className="mb-4 mt-1 text-xs text-void-dim">
           This list is a convenience index kept in the API's memory, not the source of truth —
           it resets when the API restarts. Every vault's real status always lives on-chain; paste
