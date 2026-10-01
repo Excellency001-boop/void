@@ -22,6 +22,12 @@ export interface RevertInfo {
   viaEntryPoint?: boolean;
 }
 
+/// Decoded revert args can include bigint (uint256 opIndex, spend amounts, etc.), which
+/// Fastify's default JSON serializer throws on. Stringify them before they ever reach a reply.
+function serializeArgs(args: readonly unknown[]): unknown[] {
+  return args.map((arg) => (typeof arg === "bigint" ? arg.toString() : arg));
+}
+
 /// Unwraps EntryPoint's FailedOpWithRevert(opIndex, reason, inner) to decode the INNER revert —
 /// the actual PolicyValidator custom error — rather than surfacing the opaque "AA23 reverted"
 /// wrapper to the caller.
@@ -31,7 +37,7 @@ function tryUnwrapEntryPointRevert(errorName: string, args: readonly unknown[]):
   if (!inner || inner === "0x") return undefined;
   try {
     const decoded = decodeErrorResult({ abi: policyValidatorAbi, data: inner });
-    return { errorName: decoded.errorName, args: (decoded.args as unknown[]) ?? [], viaEntryPoint: true };
+    return { errorName: decoded.errorName, args: serializeArgs((decoded.args as unknown[]) ?? []), viaEntryPoint: true };
   } catch {
     return undefined;
   }
@@ -43,7 +49,7 @@ function decodeRevert(err: unknown): RevertInfo {
     if (revertError instanceof ContractFunctionRevertedError) {
       const errorName = revertError.data?.errorName ?? "UnknownRevert";
       const args = (revertError.data?.args as unknown[]) ?? [];
-      return tryUnwrapEntryPointRevert(errorName, args) ?? { errorName, args };
+      return tryUnwrapEntryPointRevert(errorName, args) ?? { errorName, args: serializeArgs(args) };
     }
   }
   return { errorName: "UnknownRevert", args: [String(err)] };

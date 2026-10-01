@@ -1,0 +1,8 @@
+{
+  "chainId": 421614,
+  "entryPoint": "0x93e339960f1da0da3b33eec0b40ff960b8d1a561",
+  "kernelImpl": "0x92aafcb7d8a611dbe833a929a76401f60506745e",
+  "kernelFactory": "0x3dd5257c7aec21224e105e410a27aec0128f6c10",
+  "ecdsaValidator": "0x26caff683284d041a8632f63990dcaa3a6a05f68",
+  "policyValidator": "0x7b05ac2861b802efae43da3ab4fd984e7adb01ca"
+}
