@@ -97,7 +97,7 @@ on Basescan — then try one *inside* the policy and watch it succeed.
 [your name / handle]
 
 ## Links
-- Live dashboard: https://web-xi-one-8jpius867x.vercel.app
+- Live dashboard: https://void-sessionvault.vercel.app
 - Live API: https://void-api-production-fc5e.up.railway.app/health
 - GitHub: [PASTE REPO URL]
 - Video: [PASTE VIDEO URL — see DEMO_SCRIPT.md]

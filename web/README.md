@@ -13,17 +13,18 @@ npm run dev
 
 ## Deployed
 
-Live on Vercel: https://web-xi-one-8jpius867x.vercel.app, pointed at the live Railway API via
+Live on Vercel: https://void-sessionvault.vercel.app, pointed at the live Railway API via
 `NEXT_PUBLIC_API_URL` set as a **production** environment variable (Next.js bakes `NEXT_PUBLIC_*`
 vars in at build time — set them before deploying, or trigger a rebuild after). Deployed with
 `vercel --prod`.
 
-One thing to know if re-aliasing: the auto-assigned production domain
-(`<project>-<hash>.vercel.app`) is public by default, but custom aliases created afterward via
-`vercel alias set` land behind Vercel's SSO deployment protection on this account and redirect to
-a login page — confirmed by testing, not assumed. Stick with the auto-assigned production domain
-for anything that needs to be publicly viewable without a Vercel account, or disable deployment
-protection for the project first if a custom domain is worth the extra step.
+One thing worth knowing if re-aliasing on a fresh project: by default this account's projects ship
+with `ssoProtection: { deploymentType: "all_except_custom_domains" }`, which gates every
+`*.vercel.app` alias (including ones made with `vercel alias set` — Vercel doesn't count those as
+"custom domains", only externally-owned ones do) behind a Vercel login redirect. Confirmed by
+testing, not assumed — `void-vault.vercel.app`-style aliases 404'd into an SSO page until this was
+turned off. Fix: `PATCH https://api.vercel.com/v9/projects/<id>?teamId=<id>` with
+`{"ssoProtection": null}` (no CLI command for this as of writing), then alias as normal.
 
 Requires `api/` running and reachable at `NEXT_PUBLIC_API_URL` (defaults to
 `http://localhost:4000`), which in turn requires `contracts/deployments/<chainId>.json` to exist
