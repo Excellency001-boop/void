@@ -103,6 +103,12 @@ export interface ActionInput {
   calldata: string;
 }
 
+export interface SweepStatus {
+  installed: boolean;
+  eligible: boolean;
+  amountWei: string;
+}
+
 export type ApiClient = ReturnType<typeof createApiClient>;
 
 // ── client factory ───────────────────────────────────────────────────────
@@ -150,6 +156,17 @@ export function createApiClient(baseUrl: string) {
       request<{ deposited: true; txHash: string }>(`/vaults/${address}/deposit`, {
         method: "POST",
         body: JSON.stringify({ amountWei }),
+      }),
+
+    getSweepStatus: (address: string) => request<SweepStatus>(`/vaults/${address}/sweep-status`),
+
+    sweepVault: (address: string) =>
+      // Body is otherwise empty, but the request() helper always sends Content-Type:
+      // application/json — Fastify's default parser 400s on a genuinely empty body under that
+      // header, so send an explicit empty object rather than omitting `body`.
+      request<{ swept: true; txHash: string; amountWei: string }>(`/vaults/${address}/sweep`, {
+        method: "POST",
+        body: "{}",
       }),
 
     simulateAction: (input: ActionInput) =>

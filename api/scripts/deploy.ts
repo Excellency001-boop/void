@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { createPublicClient, createWalletClient, http, defineChain, type Address, type Chain } from "viem";
@@ -15,10 +15,11 @@ const KNOWN_CHAINS: Chain[] = [foundry, baseSepolia, arbitrumSepolia];
 /// tooling bug, not a project constraint. viem's `deployContract` talks to the same RPC directly
 /// and sidesteps it; it's also the same stack the rest of the API already uses.
 ///
-/// Not idempotent: re-running against a chain that already has vaults deploys a SEPARATE, fresh
-/// set of infra and overwrites the address file — existing vaults would still work on-chain
-/// (nothing about them changes) but would no longer be reachable through the new deployment file
-/// unless you keep track of both. Fine for local dev; a real environment deploys once.
+/// Incrementally idempotent: re-running against a chain with an existing deployment file reuses
+/// every address already on record and only deploys whatever's missing from it (e.g. a module
+/// added after the chain's first deploy) — existing vaults are unaffected either way, since each
+/// one has its module addresses baked in at creation, not looked up live. Delete the chain's
+/// deployment file first to force a genuinely fresh set of infra.
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONTRACTS_DIR = path.resolve(__dirname, "../../contracts");
@@ -76,13 +77,36 @@ async function main() {
     return receipt.contractAddress;
   }
 
-  const entryPoint = await deploy("EntryPoint.sol", "EntryPoint");
-  const kernelImpl = await deploy("Kernel.sol", "Kernel", [entryPoint]);
-  const kernelFactory = await deploy("KernelFactory.sol", "KernelFactory", [kernelImpl]);
-  const ecdsaValidator = await deploy("ECDSAValidator.sol", "ECDSAValidator");
-  const policyValidator = await deploy("PolicyValidator.sol", "PolicyValidator");
+  // Incremental mode: if this chain already has a deployment record, reuse its already-proven
+  // addresses (vaults created against them keep working regardless — the address is baked into
+  // each vault at creation, not looked up live) rather than standing up a whole second set of
+  // shared infra just to add one new module. Only the pieces missing from the existing file get
+  // deployed. A genuinely new chain still deploys everything, same as before.
+  const apiDeploymentsDir = path.resolve(__dirname, "../deployments");
+  const existingPath = path.join(apiDeploymentsDir, `${chainId}.json`);
+  const existing = existsSync(existingPath) ? JSON.parse(readFileSync(existingPath, "utf-8")) : undefined;
 
-  const deployment = { chainId, entryPoint, kernelImpl, kernelFactory, ecdsaValidator, policyValidator };
+  const entryPoint: Address = existing?.entryPoint ?? (await deploy("EntryPoint.sol", "EntryPoint"));
+  const kernelImpl: Address = existing?.kernelImpl ?? (await deploy("Kernel.sol", "Kernel", [entryPoint]));
+  const kernelFactory: Address =
+    existing?.kernelFactory ?? (await deploy("KernelFactory.sol", "KernelFactory", [kernelImpl]));
+  const ecdsaValidator: Address =
+    existing?.ecdsaValidator ?? (await deploy("ECDSAValidator.sol", "ECDSAValidator"));
+  const policyValidator: Address =
+    existing?.policyValidator ?? (await deploy("PolicyValidator.sol", "PolicyValidator"));
+  const expirySweepExecutor: Address =
+    existing?.expirySweepExecutor ??
+    (await deploy("ExpirySweepExecutor.sol", "ExpirySweepExecutor", [policyValidator]));
+
+  const deployment = {
+    chainId,
+    entryPoint,
+    kernelImpl,
+    kernelFactory,
+    ecdsaValidator,
+    policyValidator,
+    expirySweepExecutor,
+  };
   const deploymentJson = JSON.stringify(deployment, null, 2);
 
   // Written to both locations: contracts/deployments/ is the canonical record alongside the

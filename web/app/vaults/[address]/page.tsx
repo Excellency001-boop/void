@@ -19,6 +19,7 @@ import {
   SecondaryButton,
 } from "@/components/ui";
 import { RevokePanel } from "@/components/RevokePanel";
+import { SweepPanel } from "@/components/SweepPanel";
 import { AgentConsole } from "@/components/AgentConsole";
 
 export default function VaultDetailPage() {
@@ -116,9 +117,10 @@ export default function VaultDetailPage() {
         </Card>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <RevokePanel vaultAddress={s.vaultAddress} onRevoked={invalidate} />
         <DepositButton vaultAddress={s.vaultAddress} onDeposited={invalidate} />
+        <SweepPanel vaultAddress={s.vaultAddress} onSwept={invalidate} />
       </div>
 
       <Card>

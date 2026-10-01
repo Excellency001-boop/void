@@ -35,6 +35,10 @@ const deploymentSchema = z.object({
   kernelFactory: z.string(),
   ecdsaValidator: z.string(),
   policyValidator: z.string(),
+  // Optional: deployment files written before ExpirySweepExecutor existed won't have this field
+  // yet. Vault creation checks for its presence before trying to install the module — see
+  // vaults.ts — rather than failing config load entirely for an otherwise-valid older file.
+  expirySweepExecutor: z.string().optional(),
 });
 
 function loadDeployment() {

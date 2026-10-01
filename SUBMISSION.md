@@ -36,19 +36,27 @@ Session Vault: a real ERC-4337 smart account (ZeroDev Kernel v3) with a custom v
 action is checked, in a fixed priority order (expiry → spend caps → whitelist → tx count → rate
 limits), before the EntryPoint will let it execute. Outside that policy, the session key cannot
 produce a signature the contract accepts — there's no code path where "the agent decided to" is
-sufficient. When the session ends, the owner's root key — which never left their control — reclaims
-whatever remains. Force-revoke is one gasless, owner-signed message away.
+sufficient. When the session ends — expiry or force-revoke — an `ExpirySweepExecutor` module
+installed on the same vault returns whatever remains to the owner automatically: it's permissionless
+(anyone can trigger it, since the payout address is read from the vault's own on-chain policy, never
+caller-supplied) and an in-process keeper calls it on a timer, so no one has to remember to. The
+owner's root key, which never left their control, could always do the same thing manually too; the
+sweep just means they don't have to.
 
-**What's built and live on Base Sepolia today:**
+**What's built and live on Base Sepolia and Arbitrum Sepolia today:**
 - `PolicyValidator.sol` — the on-chain enforcement, 23 Foundry tests including two priority-order
   proofs and a fuzz test on the spend-cap boundary, plus an integration test against real ZeroDev
   Kernel v3.3 + a real ERC-4337 v0.7 EntryPoint (not mocks).
 - An agent-facing API (Fastify) — create a vault, get live status/history, simulate an action
   (replays the contract's own `validateUserOp` via `eth_call`, not a reimplementation), execute for
   real, gasless owner revoke.
-- A dashboard — create a policy, watch a vault's live budget/tx-count/history, and an **Agent
-  Console** that lets you act as the agent yourself: simulate or execute an action and watch it get
-  accepted or genuinely rejected on-chain in real time.
+- A dashboard — create a policy, switch between Base Sepolia and Arbitrum Sepolia, watch a vault's
+  live budget/tx-count/history, and an **Agent Console** that lets you act as the agent yourself:
+  simulate or execute an action and watch it get accepted or genuinely rejected on-chain in real
+  time.
+- `ExpirySweepExecutor.sol` — the automatic fund-return module, 5 Foundry tests proving it's
+  inert before expiry/revoke, pays out in full after either, can't be made to redirect funds, and
+  can't be double-spent.
 
 **Why the rejection has to be real, not simulated.** A real ERC-4337 bundler estimates gas before
 including anything, so a policy-violating action would normally just be silently dropped — no
@@ -72,20 +80,22 @@ explorer. The guarantee isn't a UI message; it's inspectable.
   entirely in the contract, not in API custody, so this gap doesn't weaken the core claim.
 - **Dashboard:** Next.js 15, wagmi/viem, deliberately styled as a technical console rather than a
   consumer app.
-- **Chain:** Base Sepolia (84532), live. Base and Arbitrum mainnet are the deploy targets once
-  hardened past hackathon scope.
+- **Chain:** Base Sepolia (84532) and Arbitrum Sepolia (421614), both live, each with its own
+  deployed API instance and a network switcher in the dashboard. Base and Arbitrum mainnet are the
+  deploy targets once hardened past hackathon scope.
 
 ## What's real vs. what's next
 
 Real and verified on-chain today: policy compilation, session-key issuance, on-chain enforcement
 in fixed priority order, real simulate/execute against real Kernel v3 + real EntryPoint, real
-mined-and-reverted rejections, gasless owner revoke — all exercised through the actual dashboard UI
-against live Base Sepolia, not just scripts.
+mined-and-reverted rejections, gasless owner revoke, and automatic fund return on expiry or revoke
+(both the permissionless contract call and the unattended keeper that triggers it) — all exercised
+through the actual dashboard UI against live Base Sepolia and Arbitrum Sepolia, not just scripts.
 
 Not yet built: a production bundler integration (so the owner isn't trusting VOID's own relayer for
 liveness), agent-side signing (so the API never sees a session key at all), persistent storage for
-the vault index (currently in-memory, resets on API restart — on-chain state is unaffected either
-way), and the Solana leg.
+the vault index (currently in-memory, resets on API restart — on-chain state, and the automatic
+sweep, are unaffected either way), and the Solana leg.
 
 ## Try it in under a minute
 Open the dashboard, click **+ New Session Vault**, set a spend cap and one allowed

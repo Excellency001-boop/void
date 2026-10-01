@@ -20,3 +20,4 @@ export const kernelAbi = loadAbi("kernel.json");
 export const kernelFactoryAbi = loadAbi("kernelFactory.json");
 export const ecdsaValidatorAbi = loadAbi("ecdsaValidator.json");
 export const entryPointAbi = loadAbi("entryPoint.json");
+export const expirySweepExecutorAbi = loadAbi("expirySweepExecutor.json");

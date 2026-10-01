@@ -2,9 +2,10 @@ import { type Address, type Hex, keccak256, encodePacked } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { publicClient, relayerClient } from "./chain.js";
 import { config } from "./config.js";
-import { kernelFactoryAbi, policyValidatorAbi } from "./abi/load.js";
+import { kernelFactoryAbi, policyValidatorAbi, expirySweepExecutorAbi } from "./abi/load.js";
 import {
   encodeAccountInitData,
+  encodeInstallExpirySweepExecutorCall,
   encodeInstallPolicyValidatorCall,
   encodePolicyInitData,
   validatorToIdentifier,
@@ -50,12 +51,25 @@ export async function createVault(params: CreateVaultParams): Promise<CreateVaul
     initialSelector: params.initialSelector,
   });
 
-  const installCall = encodeInstallPolicyValidatorCall(config.deployment.policyValidator as Address, policyInitData);
+  const installPolicyCall = encodeInstallPolicyValidatorCall(
+    config.deployment.policyValidator as Address,
+    policyInitData
+  );
+  // Installed in the same atomic initConfig as PolicyValidator so every vault this API creates
+  // can have its remaining balance returned to the owner automatically once expired or revoked —
+  // see ExpirySweepExecutor.sol. Older deployment files predating this module simply omit it; in
+  // that case new vaults are still created, just without the sweep capability, rather than the
+  // API refusing to start (see the `.optional()` on config.ts's deploymentSchema).
+  const initConfig = [installPolicyCall];
+  if (config.deployment.expirySweepExecutor) {
+    initConfig.push(encodeInstallExpirySweepExecutorCall(config.deployment.expirySweepExecutor as Address));
+  }
+
   const rootValidatorId = validatorToIdentifier(config.deployment.ecdsaValidator as Address);
   const initData = encodeAccountInitData({
     rootValidatorId,
     ownerAddress: params.ownerAddress,
-    initConfig: [installCall],
+    initConfig,
   });
 
   // Deterministic (CREATE2-derived) salt so re-deriving the same owner+policy twice is at least
@@ -228,6 +242,54 @@ export async function revokeVaultWithSignature(vaultAddress: Address, ownerSigna
   });
   await publicClient.waitForTransactionReceipt({ hash: txHash });
   return txHash;
+}
+
+export interface SweepStatus {
+  installed: boolean;
+  eligible: boolean;
+  amountWei: string;
+}
+
+/// Reads ExpirySweepExecutor.sweepable(vault) — eligibility and amount are both derived live
+/// on-chain from PolicyValidator's own storage, never cached. `installed: false` just means this
+/// chain's deployment predates the module (see config.ts), not that the vault itself lacks it.
+export async function getSweepStatus(vaultAddress: Address): Promise<SweepStatus> {
+  const expirySweepExecutor = config.deployment.expirySweepExecutor;
+  if (!expirySweepExecutor) return { installed: false, eligible: false, amountWei: "0" };
+
+  const [eligible, amount] = (await publicClient.readContract({
+    address: expirySweepExecutor as Address,
+    abi: expirySweepExecutorAbi,
+    functionName: "sweepable",
+    args: [vaultAddress],
+  })) as [boolean, bigint];
+
+  return { installed: true, eligible, amountWei: amount.toString() };
+}
+
+/// Triggers the permissionless on-chain sweep for real. The relayer submits it (and pays gas) as
+/// a convenience — ExpirySweepExecutor.sweep itself has no access control, so literally anyone
+/// could call it directly against the contract; routing it through the API just means a demo /
+/// the dashboard / the keeper loop (see keeper.ts) don't need their own funded wallet to trigger
+/// it. The payout destination is read on-chain from the vault's own policy, never from this call.
+export async function sweepVault(vaultAddress: Address): Promise<{ txHash: Hex; amountWei: string }> {
+  const expirySweepExecutor = config.deployment.expirySweepExecutor;
+  if (!expirySweepExecutor) {
+    throw new Error("ExpirySweepExecutor is not deployed on this chain");
+  }
+
+  const { eligible, amountWei } = await getSweepStatus(vaultAddress);
+  if (!eligible) throw new Error("Vault is not yet expired or revoked — nothing to sweep");
+  if (amountWei === "0") throw new Error("Vault has already been swept — nothing left to sweep");
+
+  const txHash = await relayerClient.writeContract({
+    address: expirySweepExecutor as Address,
+    abi: expirySweepExecutorAbi,
+    functionName: "sweep",
+    args: [vaultAddress],
+  });
+  await publicClient.waitForTransactionReceipt({ hash: txHash });
+  return { txHash, amountWei };
 }
 
 export { getVault, listVaults };

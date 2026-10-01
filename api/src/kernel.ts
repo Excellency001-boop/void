@@ -16,6 +16,7 @@ import { kernelAbi, entryPointAbi } from "./abi/load.js";
 /// shapes against the real contracts; this is the TypeScript side of that same contract.
 
 export const MODULE_TYPE_VALIDATOR = 1n;
+export const MODULE_TYPE_EXECUTOR = 2n;
 
 const EXECUTE_SELECTOR = toFunctionSelector("execute(bytes32,bytes)");
 const SINGLE_CALL_MODE: Hex = pad("0x00", { size: 32 }); // CALLTYPE_SINGLE(0x00) + EXECTYPE_DEFAULT(0x00) + zero rest
@@ -95,6 +96,25 @@ export function encodeInstallPolicyValidatorCall(policyValidator: Address, polic
     abi: kernelAbi,
     functionName: "installModule",
     args: [MODULE_TYPE_VALIDATOR, policyValidator, initData],
+  });
+}
+
+/// Kernel.installModule(MODULE_TYPE_EXECUTOR, module, hookAddr(20B) ++ abi.encode(executorData,
+/// hookData)) — installs ExpirySweepExecutor so its permissionless `sweep(account)` can call back
+/// into the vault via `executeFromExecutor` later, with no signature involved. Nothing to
+/// configure per-account (eligibility is read live from PolicyValidator at sweep time), so both
+/// inner fields are empty — see Kernel.installModule's MODULE_TYPE_EXECUTOR branch and
+/// InstallExecutorDataFormat in kernel/types/Structs.sol.
+export function encodeInstallExpirySweepExecutorCall(expirySweepExecutor: Address): Hex {
+  const initData = concatHex([
+    pad("0x01", { size: 20 }), // hook sentinel: address(1), "no hook required"
+    encodeAbiParameters([{ type: "bytes" }, { type: "bytes" }], ["0x", "0x"]),
+  ]);
+
+  return encodeFunctionData({
+    abi: kernelAbi,
+    functionName: "installModule",
+    args: [MODULE_TYPE_EXECUTOR, expirySweepExecutor, initData],
   });
 }
 

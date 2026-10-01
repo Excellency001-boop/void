@@ -9,6 +9,8 @@ import {
   listVaults,
   computeRevokeMessage,
   depositToVault,
+  getSweepStatus,
+  sweepVault,
 } from "../vaults.js";
 
 const addressSchema = z.string().refine(isAddress, "must be a 0x-prefixed 20-byte address");
@@ -116,6 +118,29 @@ export function registerVaultRoutes(app: FastifyInstance) {
       return { revoked: true, txHash };
     } catch (err) {
       return reply.code(400).send({ error: "revoke_failed", details: String(err) });
+    }
+  });
+
+  app.get<{ Params: { address: string } }>("/vaults/:address/sweep-status", async (request, reply) => {
+    if (!isAddress(request.params.address)) {
+      return reply.code(400).send({ error: "invalid_address" });
+    }
+    return getSweepStatus(request.params.address as Address);
+  });
+
+  // Permissionless on-chain (see ExpirySweepExecutor.sol) — this endpoint takes no signature or
+  // auth because the contract itself needs none; anyone noticing an expired/revoked vault still
+  // holding a balance can trigger its return to the owner. The automatic keeper (keeper.ts) also
+  // calls this same function directly rather than hitting itself over HTTP.
+  app.post<{ Params: { address: string } }>("/vaults/:address/sweep", async (request, reply) => {
+    if (!isAddress(request.params.address)) {
+      return reply.code(400).send({ error: "invalid_address" });
+    }
+    try {
+      const { txHash, amountWei } = await sweepVault(request.params.address as Address);
+      return { swept: true, txHash, amountWei };
+    } catch (err) {
+      return reply.code(400).send({ error: "sweep_failed", details: String(err) });
     }
   });
 }

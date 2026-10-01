@@ -4,5 +4,6 @@
   "kernelImpl": "0x92aafcb7d8a611dbe833a929a76401f60506745e",
   "kernelFactory": "0x3dd5257c7aec21224e105e410a27aec0128f6c10",
   "ecdsaValidator": "0x26caff683284d041a8632f63990dcaa3a6a05f68",
-  "policyValidator": "0x7b05ac2861b802efae43da3ab4fd984e7adb01ca"
+  "policyValidator": "0x7b05ac2861b802efae43da3ab4fd984e7adb01ca",
+  "expirySweepExecutor": "0xb48eadcba02ad8ee85d96c888aab83a8289d4b29"
 }
