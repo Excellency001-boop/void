@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { isAddress, isHex } from "viem";
-import { api, ApiError, type ExecuteResult, type SimulateResult } from "@/lib/api";
+import { ApiError, type ExecuteResult, type SimulateResult } from "@/lib/api";
+import { useNetwork } from "@/lib/network-context";
 import { Card, Label, PrimaryButton, SecondaryButton, TxLink } from "@/components/ui";
 
 interface LogEntry {
@@ -17,6 +18,7 @@ interface LogEntry {
 let logId = 0;
 
 export function AgentConsole({ vaultAddress }: { vaultAddress: string }) {
+  const { api } = useNetwork();
   const [sessionKey, setSessionKey] = useState("");
   const [target, setTarget] = useState("");
   const [valueEth, setValueEth] = useState("0");

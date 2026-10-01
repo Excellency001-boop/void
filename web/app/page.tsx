@@ -5,16 +5,17 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { isAddress } from "viem";
-import { api } from "@/lib/api";
+import { useNetwork } from "@/lib/network-context";
 import { truncateAddress, weiToEthDisplay, formatDuration } from "@/lib/format";
 import { Card, PrimaryButton, SecondaryButton, Label } from "@/components/ui";
 
 export default function HomePage() {
   const router = useRouter();
   const [jumpAddress, setJumpAddress] = useState("");
+  const { network, api } = useNetwork();
 
   const vaultsQuery = useQuery({
-    queryKey: ["vaults"],
+    queryKey: ["vaults", network.id],
     queryFn: api.listVaults,
     refetchInterval: 15_000,
   });
@@ -63,7 +64,7 @@ export default function HomePage() {
 
         {vaultsQuery.isError && (
           <div className="rounded-sm border border-void-danger/30 bg-void-dangerDim/10 px-4 py-3 text-sm text-void-danger">
-            Couldn&apos;t reach the API. Is it running at the configured NEXT_PUBLIC_API_URL?
+            Couldn&apos;t reach the {network.name} API ({network.apiUrl}).
           </div>
         )}
 

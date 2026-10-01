@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { explorerAddressUrl, explorerTxUrl } from "@/lib/config";
+import { explorerAddressUrl, explorerTxUrl } from "@/lib/networks";
+import { useNetwork } from "@/lib/network-context";
 import { truncateAddress } from "@/lib/format";
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -24,9 +25,10 @@ export function Label({ children }: { children: React.ReactNode }) {
 }
 
 export function AddressLink({ address, chars = 4 }: { address: string; chars?: number }) {
+  const { network } = useNetwork();
   return (
     <a
-      href={explorerAddressUrl(address)}
+      href={explorerAddressUrl(network, address)}
       target="_blank"
       rel="noreferrer"
       className="font-mono text-void-text underline decoration-void-border underline-offset-2 hover:decoration-void-accent"
@@ -79,9 +81,10 @@ export function CopyableAddress({
 }
 
 export function TxLink({ hash, label = "tx" }: { hash: string; label?: string }) {
+  const { network } = useNetwork();
   return (
     <a
-      href={explorerTxUrl(hash)}
+      href={explorerTxUrl(network, hash)}
       target="_blank"
       rel="noreferrer"
       className="font-mono text-void-accent underline decoration-void-accentDim underline-offset-2 hover:decoration-void-accent"

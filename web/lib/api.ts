@@ -1,5 +1,3 @@
-import { API_URL } from "./config";
-
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -8,18 +6,6 @@ export class ApiError extends Error {
   ) {
     super(message);
   }
-}
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  });
-  const body = await res.json().catch(() => undefined);
-  if (!res.ok) {
-    throw new ApiError(body?.error ?? body?.message ?? `Request failed (${res.status})`, res.status, body);
-  }
-  return body as T;
 }
 
 // ── types (mirrors api/src/*.ts) ────────────────────────────────────────────
@@ -117,39 +103,59 @@ export interface ActionInput {
   calldata: string;
 }
 
-// ── calls ────────────────────────────────────────────────────────────────
+export type ApiClient = ReturnType<typeof createApiClient>;
 
-export const api = {
-  health: () => request<{ status: string; chainId: number; chainName: string; relayer: string }>("/health"),
+// ── client factory ───────────────────────────────────────────────────────
+// A factory rather than a singleton bound to one fixed base URL: the dashboard talks to a
+// different API instance per network (see lib/networks.ts) — each chain has its own deployed API,
+// not one multi-tenant service — so every caller needs the client for whichever network is
+// currently active, not a module-load-time constant.
 
-  createVault: (params: CreateVaultParams) =>
-    request<CreateVaultResult>("/vaults", { method: "POST", body: JSON.stringify(params) }),
+export function createApiClient(baseUrl: string) {
+  async function request<T>(path: string, init?: RequestInit): Promise<T> {
+    const res = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers: { "Content-Type": "application/json", ...init?.headers },
+    });
+    const body = await res.json().catch(() => undefined);
+    if (!res.ok) {
+      throw new ApiError(body?.error ?? body?.message ?? `Request failed (${res.status})`, res.status, body);
+    }
+    return body as T;
+  }
 
-  listVaults: () => request<VaultRecord[]>("/vaults"),
+  return {
+    health: () => request<{ status: string; chainId: number; chainName: string; relayer: string }>("/health"),
 
-  getVaultStatus: (address: string) => request<VaultStatus>(`/vaults/${address}`),
+    createVault: (params: CreateVaultParams) =>
+      request<CreateVaultResult>("/vaults", { method: "POST", body: JSON.stringify(params) }),
 
-  getVaultHistory: (address: string) =>
-    request<{ vaultAddress: string; actions: HistoryEntry[] }>(`/vaults/${address}/history`),
+    listVaults: () => request<VaultRecord[]>("/vaults"),
 
-  getRevokeMessage: (address: string) =>
-    request<{ message: string; instructions: string }>(`/vaults/${address}/revoke-message`),
+    getVaultStatus: (address: string) => request<VaultStatus>(`/vaults/${address}`),
 
-  revokeVault: (address: string, ownerSignature: string) =>
-    request<{ revoked: true; txHash: string }>(`/vaults/${address}/revoke`, {
-      method: "POST",
-      body: JSON.stringify({ ownerSignature }),
-    }),
+    getVaultHistory: (address: string) =>
+      request<{ vaultAddress: string; actions: HistoryEntry[] }>(`/vaults/${address}/history`),
 
-  depositToVault: (address: string, amountWei: string) =>
-    request<{ deposited: true; txHash: string }>(`/vaults/${address}/deposit`, {
-      method: "POST",
-      body: JSON.stringify({ amountWei }),
-    }),
+    getRevokeMessage: (address: string) =>
+      request<{ message: string; instructions: string }>(`/vaults/${address}/revoke-message`),
 
-  simulateAction: (input: ActionInput) =>
-    request<SimulateResult>("/agent/simulate", { method: "POST", body: JSON.stringify(input) }),
+    revokeVault: (address: string, ownerSignature: string) =>
+      request<{ revoked: true; txHash: string }>(`/vaults/${address}/revoke`, {
+        method: "POST",
+        body: JSON.stringify({ ownerSignature }),
+      }),
 
-  executeAction: (input: ActionInput) =>
-    request<ExecuteResult>("/agent/execute", { method: "POST", body: JSON.stringify(input) }),
-};
+    depositToVault: (address: string, amountWei: string) =>
+      request<{ deposited: true; txHash: string }>(`/vaults/${address}/deposit`, {
+        method: "POST",
+        body: JSON.stringify({ amountWei }),
+      }),
+
+    simulateAction: (input: ActionInput) =>
+      request<SimulateResult>("/agent/simulate", { method: "POST", body: JSON.stringify(input) }),
+
+    executeAction: (input: ActionInput) =>
+      request<ExecuteResult>("/agent/execute", { method: "POST", body: JSON.stringify(input) }),
+  };
+}

@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import { privateKeyToAccount } from "viem/accounts";
 import type { Hex } from "viem";
-import { api, ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api";
+import { useNetwork } from "@/lib/network-context";
 import { DangerButton, SecondaryButton, TxLink, Label } from "@/components/ui";
 
 export function RevokePanel({ vaultAddress, onRevoked }: { vaultAddress: string; onRevoked: () => void }) {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
+  const { api } = useNetwork();
 
   const [confirming, setConfirming] = useState(false);
   const [useManualKey, setUseManualKey] = useState(false);

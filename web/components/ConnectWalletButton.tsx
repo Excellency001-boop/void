@@ -1,7 +1,8 @@
 "use client";
 
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { useNetwork } from "@/lib/network-context";
+import { type SupportedChainId } from "@/lib/wagmi";
 import { truncateAddress } from "@/lib/format";
 
 export function ConnectWalletButton() {
@@ -9,17 +10,18 @@ export function ConnectWalletButton() {
   const { connectors, connect, isPending } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain } = useSwitchChain();
+  const { network } = useNetwork();
 
   if (isConnected && address) {
-    const wrongChain = chainId !== baseSepolia.id;
+    const wrongChain = chainId !== network.chainId;
     return (
       <div className="flex items-center gap-2">
         {wrongChain && (
           <button
-            onClick={() => switchChain({ chainId: baseSepolia.id })}
+            onClick={() => switchChain({ chainId: network.chainId as SupportedChainId })}
             className="rounded-sm border border-void-warn/40 bg-void-warnDim/30 px-2.5 py-1.5 text-xs font-medium text-void-warn hover:bg-void-warnDim/50"
           >
-            Switch to Base Sepolia
+            Switch to {network.name}
           </button>
         )}
         <button
@@ -36,7 +38,7 @@ export function ConnectWalletButton() {
   const connector = connectors[0];
   return (
     <button
-      onClick={() => connector && connect({ connector })}
+      onClick={() => connector && connect({ connector, chainId: network.chainId as SupportedChainId })}
       disabled={isPending || !connector}
       className="rounded-sm border border-void-border bg-void-raised px-3 py-1.5 text-xs font-medium text-void-text hover:border-void-borderStrong disabled:opacity-50"
     >

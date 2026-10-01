@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
 import { isAddress, toFunctionSelector, type Hex } from "viem";
-import { api, ApiError, type CreateVaultResult } from "@/lib/api";
+import { ApiError, type CreateVaultResult } from "@/lib/api";
+import { useNetwork } from "@/lib/network-context";
 import { ethToWei } from "@/lib/format";
 import { Card, PrimaryButton, SecondaryButton, Label, BackLink, TxLink, CopyButton } from "@/components/ui";
 
@@ -17,6 +18,7 @@ const DURATIONS = [
 
 export default function CreateVaultPage() {
   const { address } = useAccount();
+  const { api } = useNetwork();
 
   const [owner, setOwner] = useState("");
   const [duration, setDuration] = useState(86400);

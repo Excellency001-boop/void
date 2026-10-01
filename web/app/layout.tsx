@@ -3,7 +3,7 @@ import Link from "next/link";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ConnectWalletButton } from "@/components/ConnectWalletButton";
-import { ChainBadge } from "@/components/ChainBadge";
+import { NetworkSwitcher } from "@/components/NetworkSwitcher";
 
 const description =
   "Give an AI agent real economic agency without giving it the ability to rug you. Session Vaults compile a spending policy into an on-chain ERC-4337 validator — the agent can't produce a valid signature for anything outside it.";
@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </span>
               </Link>
               <div className="flex items-center gap-3">
-                <ChainBadge />
+                <NetworkSwitcher />
                 <ConnectWalletButton />
               </div>
             </header>

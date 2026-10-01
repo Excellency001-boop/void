@@ -3,7 +3,8 @@
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { api, ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api";
+import { useNetwork } from "@/lib/network-context";
 import { weiToEthDisplay, formatDuration, formatTimestamp, pctOf, ethToWei } from "@/lib/format";
 import {
   Card,
@@ -23,22 +24,23 @@ import { AgentConsole } from "@/components/AgentConsole";
 export default function VaultDetailPage() {
   const { address } = useParams<{ address: string }>();
   const queryClient = useQueryClient();
+  const { network, api } = useNetwork();
 
   const statusQuery = useQuery({
-    queryKey: ["vault-status", address],
+    queryKey: ["vault-status", network.id, address],
     queryFn: () => api.getVaultStatus(address),
     refetchInterval: 8_000,
   });
 
   const historyQuery = useQuery({
-    queryKey: ["vault-history", address],
+    queryKey: ["vault-history", network.id, address],
     queryFn: () => api.getVaultHistory(address),
     refetchInterval: 8_000,
   });
 
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: ["vault-status", address] });
-    queryClient.invalidateQueries({ queryKey: ["vault-history", address] });
+    queryClient.invalidateQueries({ queryKey: ["vault-status", network.id, address] });
+    queryClient.invalidateQueries({ queryKey: ["vault-history", network.id, address] });
   }
 
   if (statusQuery.isLoading) {
@@ -153,6 +155,7 @@ export default function VaultDetailPage() {
 }
 
 function DepositButton({ vaultAddress, onDeposited }: { vaultAddress: string; onDeposited: () => void }) {
+  const { api } = useNetwork();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("0.005");
   const [busy, setBusy] = useState(false);
