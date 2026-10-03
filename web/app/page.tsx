@@ -44,7 +44,7 @@ export default function HomePage() {
         <p className="max-w-xl text-lg leading-relaxed text-void-muted">
           VOID compiles a spending policy directly into an on-chain ERC-4337 validator. Outside
           that policy there is no signature the agent&apos;s session key can produce that the
-          contract will accept — not a review step, a mathematical guarantee.
+          contract will accept. Not a review step, a mathematical guarantee.
         </p>
         <div className="flex flex-wrap items-center gap-3 pt-2">
           <Link href="/create">
@@ -69,7 +69,7 @@ export default function HomePage() {
         <div className="p-6">
           <div className="font-mono text-3xl font-medium text-void-text">2</div>
           <div className="mt-1.5 text-sm text-void-muted">
-            live testnets — Base Sepolia and Arbitrum Sepolia
+            live testnets: Base Sepolia and Arbitrum Sepolia
           </div>
         </div>
         <div className="p-6">
@@ -89,7 +89,7 @@ export default function HomePage() {
             Every action passes through five gates, in this exact order
           </h2>
           <p className="mt-2 text-sm text-void-muted">
-            This is PolicyValidator.validateUserOp, the real contract logic — not a simulation of
+            This is PolicyValidator.validateUserOp, the real contract logic, not a simulation of
             it. Try both paths.
           </p>
         </div>
@@ -149,7 +149,7 @@ export default function HomePage() {
               <path d="M17.5 18v-3a2.5 2.5 0 0 1 5 0v3" />
             </svg>
             <p className="text-sm text-void-muted">
-              Your vaults will show up here — create one above to get started.
+              Your vaults will show up here. Create one above to get started.
             </p>
             <a
               href="#pipeline"

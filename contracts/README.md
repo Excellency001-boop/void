@@ -10,7 +10,7 @@ and it enforces the owner's policy on every proposed action in a fixed priority 
 4. max transaction count
 5. optional rate / per-recipient limits
 
-Any violation reverts `validateUserOp` with a specific custom error — a legible, traceable
+Any violation reverts `validateUserOp` with a specific custom error, a legible, traceable
 on-chain rejection, not a silent bundler drop. See the NatSpec on `src/PolicyValidator.sol` for the
 accounting/signature-failure design tradeoffs, and `src/libraries/ExecutionLib.sol` for the v1
 scope limit (single-call executions only; batched/delegatecall executions are rejected outright).
@@ -53,7 +53,7 @@ src/
   PolicyValidator.sol
 test/
   mocks/              MockSessionAccount (isolated ERC-7579 harness), MockERC20
-  integration/        PolicyValidatorKernelIntegration.t.sol — real Kernel v3.3 + real EntryPoint v0.7
+  integration/        PolicyValidatorKernelIntegration.t.sol, real Kernel v3.3 + real EntryPoint v0.7
   PolicyValidator.t.sol
 ```
 
@@ -61,18 +61,18 @@ test/
 
 `test/integration/PolicyValidatorKernelIntegration.t.sol` deploys a genuine ZeroDev Kernel v3.3
 smart account (via `KernelFactory`), a genuine ERC-4337 v0.7 `EntryPoint`, and a genuine
-`ECDSAValidator` as the owner's root validator — no mocks anywhere in the account layer. It proves,
+`ECDSAValidator` as the owner's root validator, no mocks anywhere in the account layer. It proves,
 through real `entrypoint.handleOps()` calls:
 
 - a session-key-signed UserOp for a whitelisted action executes end-to-end (`Kernel.execute` →
   the target contract), and
 - a session-key-signed UserOp for a non-whitelisted action is rejected by `PolicyValidator.
-  validateUserOp` during validation, which EntryPoint surfaces as `FailedOpWithRevert` — the whole
+  validateUserOp` during validation, which EntryPoint surfaces as `FailedOpWithRevert`, the whole
   batch reverts and the target contract's state is provably unchanged.
 
 Setup (installing `PolicyValidator` with the owner's policy, seeding one initial whitelist entry,
 and granting Kernel's own selector gate) happens atomically inside `KernelFactory.createAccount`,
-via Kernel's `initConfig` mechanism — this is the owner's own deployment transaction, not something
+via Kernel's `initConfig` mechanism, this is the owner's own deployment transaction, not something
 an agent could reach, so it's realistic to do outside the UserOp/EntryPoint path.
 
 ## What's next (Day 6-9)
@@ -80,5 +80,5 @@ an agent could reach, so it's realistic to do outside the UserOp/EntryPoint path
 Wire the agent-facing API (`../api`) to do for real, against a live bundler on Base Sepolia, what
 this test does directly against `EntryPoint.handleOps`: build the same `installModule`-bearing
 `initData`, deploy through the real `KernelFactory`, and construct/sign/submit real UserOps for the
-session key. The module and account-wiring logic proven here does not change for that step — only
+session key. The module and account-wiring logic proven here does not change for that step, only
 the transport (a bundler RPC instead of a direct `handleOps` call in a test).

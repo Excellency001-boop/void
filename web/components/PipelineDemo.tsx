@@ -60,8 +60,8 @@ export function PipelineDemo() {
             </div>
             <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-void-muted">
               {ok
-                ? "UserOp validated. EntryPoint.handleOps mined it for real — a genuine transaction, a genuine state change."
-                : "PolicyValidator.validateUserOp reverted with TargetSelectorNotAllowed(address,bytes4). EntryPoint has no try or catch around validation, so the whole op reverts. Mined, visible, provable — not a dropped request."}
+                ? "UserOp validated. EntryPoint.handleOps mined it for real: a genuine transaction, a genuine state change."
+                : "PolicyValidator.validateUserOp reverted with TargetSelectorNotAllowed(address,bytes4). EntryPoint has no try or catch around validation, so the whole op reverts. Mined, visible, provable, not a dropped request."}
             </p>
             <div className="mt-2.5 font-mono text-xs text-void-dim">
               <a

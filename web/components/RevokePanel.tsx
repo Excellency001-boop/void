@@ -36,7 +36,7 @@ export function RevokePanel({ vaultAddress, onRevoked }: { vaultAddress: string;
       setTxHash(res.txHash);
       onRevoked();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Revoke failed — wrong owner key/signature?");
+      setError(err instanceof ApiError ? err.message : "Revoke failed. Wrong owner key or signature?");
     } finally {
       setBusy(false);
     }
@@ -63,7 +63,7 @@ export function RevokePanel({ vaultAddress, onRevoked }: { vaultAddress: string;
     <div className="flex flex-col gap-3 rounded-sm border border-void-danger/30 bg-void-dangerDim/5 p-4">
       <p className="text-sm text-void-text">
         This immediately and permanently blocks every future action from this session's key. Funds
-        already in the vault are untouched — they stay under the owner's root key. This cannot be
+        already in the vault are untouched. They stay under the owner's root key. This cannot be
         undone.
       </p>
 
@@ -99,7 +99,7 @@ export function RevokePanel({ vaultAddress, onRevoked }: { vaultAddress: string;
         <p className="text-xs text-void-warn">Connect the owner&apos;s wallet first.</p>
       ) : (
         <p className="text-xs text-void-dim">
-          Connected as <span className="font-mono">{address}</span> — must match the vault&apos;s
+          Connected as <span className="font-mono">{address}</span>. It must match the vault&apos;s
           owner address to produce a valid signature.
         </p>
       )}

@@ -21,19 +21,19 @@ const plexMono = IBM_Plex_Mono({
 });
 
 const description =
-  "Give an AI agent real economic agency without giving it the ability to rug you. Session Vaults compile a spending policy into an on-chain ERC-4337 validator — the agent can't produce a valid signature for anything outside it.";
+  "Give an AI agent real economic agency without giving it the ability to rug you. Session Vaults compile a spending policy into an on-chain ERC-4337 validator. The agent can't produce a valid signature for anything outside it.";
 
 export const metadata: Metadata = {
-  title: "VOID — Session Vaults",
+  title: "VOID | Session Vaults",
   description,
   openGraph: {
-    title: "VOID — Session Vaults",
+    title: "VOID | Session Vaults",
     description,
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "VOID — Session Vaults",
+    title: "VOID | Session Vaults",
     description,
   },
 };
@@ -60,8 +60,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </header>
             <main className="flex-1 px-6 py-8">{children}</main>
             <footer className="border-t border-void-border px-6 py-4 text-xs text-void-dim">
-              PolicyValidator enforces every action on-chain. This dashboard only reads and relays
-              — it is never the thing standing between an agent and your funds.
+              PolicyValidator enforces every action on-chain. This dashboard only reads and relays.
+              It is never the thing standing between an agent and your funds.
             </footer>
           </div>
         </Providers>

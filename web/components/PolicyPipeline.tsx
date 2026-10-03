@@ -18,7 +18,7 @@ const STATUS_LABEL: Record<GateStatus, string> = {
   cleared: "cleared",
   blocked: "blocked",
   pending: "not reached",
-  idle: "—",
+  idle: "idle",
 };
 
 /// Renders PolicyValidator's fixed five-check priority order as a literal pipeline — the real

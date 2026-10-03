@@ -59,8 +59,8 @@ export function AgentConsole({
           kind,
           ok: res.allowed,
           summary: res.allowed
-            ? `allowed — risk ${res.riskScore}/100`
-            : `blocked — ${res.revert?.errorName ?? "rejected"}`,
+            ? `allowed, risk ${res.riskScore}/100`
+            : `blocked: ${res.revert?.errorName ?? "rejected"}`,
           detail: res,
         });
       } else {
@@ -70,7 +70,7 @@ export function AgentConsole({
           ok: res.success,
           summary: res.success
             ? "executed on-chain"
-            : `reverted on-chain — ${res.revert?.errorName ?? "unknown"}`,
+            : `reverted on-chain: ${res.revert?.errorName ?? "unknown"}`,
           detail: res,
         });
       }
@@ -106,7 +106,7 @@ export function AgentConsole({
         <h3 className="text-sm font-semibold text-void-text">Agent Console</h3>
         <p className="mt-1 text-xs text-void-dim">
           Act as the agent: propose an action with the session key. Simulate replays
-          PolicyValidator.validateUserOp read-only (via eth_call) — the contract&apos;s own logic,
+          PolicyValidator.validateUserOp read-only (via eth_call). That&apos;s the contract&apos;s own logic,
           not a guess. Execute submits the real UserOp; a rejection lands as a genuine
           mined-and-reverted transaction, not a silent drop.
         </p>
@@ -203,7 +203,7 @@ function LogRow({ entry }: { entry: LogEntry }) {
         <div className="mt-1 text-void-dim">
           {detail.revert.errorName}
           {detail.revert.args.length > 0 && `(${detail.revert.args.map(String).join(", ")})`}
-          {detail.revert.viaEntryPoint && " — unwrapped from EntryPoint.FailedOpWithRevert"}
+          {detail.revert.viaEntryPoint && ", unwrapped from EntryPoint.FailedOpWithRevert"}
         </div>
       )}
 

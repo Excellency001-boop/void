@@ -194,7 +194,7 @@ export default function CreateVaultPage() {
       <div>
         <h1 className="text-2xl font-semibold text-void-text">New Session Vault</h1>
         <p className="mt-1 text-sm text-void-muted">
-          Define the policy once. It's compiled into the vault's on-chain validator — the agent
+          Define the policy once. It's compiled into the vault's on-chain validator. The agent
           that receives the session key literally cannot produce a valid signature for anything
           outside it.
         </p>
@@ -273,7 +273,7 @@ export default function CreateVaultPage() {
           <Label className="mb-2.5">First permission (optional)</Label>
           <Card className="flex flex-col gap-4 p-5">
           <p className="text-xs text-void-dim">
-            One contract + function the agent can call immediately — installed atomically with the
+            One contract + function the agent can call immediately, installed atomically with the
             policy. Add more permissions later.
           </p>
           <div>
