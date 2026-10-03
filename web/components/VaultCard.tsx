@@ -36,14 +36,20 @@ export function VaultCard({ vault }: { vault: VaultRecord }) {
   return (
     <Link
       href={`/vaults/${vault.vaultAddress}`}
-      className={`group flex h-full flex-col rounded-sm border transition duration-200 ${
+      className={`group relative flex h-full flex-col overflow-hidden rounded-sm border transition duration-300 ${
         ended
-          ? "border-void-border bg-void-surface hover:border-void-borderStrong"
-          : "border-void-success/25 bg-gradient-to-b from-void-successDim/25 to-void-surface shadow-[0_14px_44px_-20px_rgba(52,211,153,0.45)] hover:-translate-y-0.5 hover:border-void-success/50"
+          ? "border-dashed border-void-border bg-void-bg/60 saturate-0 hover:border-void-borderStrong"
+          : "border-void-success/40 bg-gradient-to-b from-void-successDim/40 via-void-surface to-void-surface shadow-[0_0_0_1px_rgba(52,211,153,0.08),0_20px_60px_-22px_rgba(52,211,153,0.6)] hover:-translate-y-1 hover:border-void-success/70 hover:shadow-[0_0_0_1px_rgba(52,211,153,0.2),0_28px_70px_-20px_rgba(52,211,153,0.75)]"
       }`}
     >
-      <div className="flex items-center justify-between px-4 pt-4">
-        <span className={`font-mono text-sm ${ended ? "text-void-muted" : "text-void-text"}`}>
+      {!ended && (
+        <>
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(110,255,200,0.9),transparent)]" />
+          <span className="pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 animate-sheen bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent)]" />
+        </>
+      )}
+      <div className="relative flex items-center justify-between px-5 pt-5">
+        <span className={`font-mono text-sm ${ended ? "text-void-dim line-through decoration-void-border" : "text-void-text"}`}>
           {truncateAddress(vault.vaultAddress, 5)}
         </span>
         <Badge tone={tone}>
@@ -53,31 +59,36 @@ export function VaultCard({ vault }: { vault: VaultRecord }) {
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-void-success" />
             </span>
           )}
+          {ended && <span className="text-[10px] leading-none">✕</span>}
           {label}
         </Badge>
       </div>
 
-      <div className="px-4 pb-4 pt-4">
-        <div className="flex items-baseline justify-between">
-          <span className="font-mono text-lg text-void-text">
+      <div className="relative px-5 pb-5 pt-5">
+        <div className="flex items-end justify-between">
+          <span className={`font-display text-3xl font-bold tracking-tight ${ended ? "text-void-dim" : "text-void-text"}`}>
             {weiToEthDisplay(spent)}
-            <span className="text-void-dim"> / {weiToEthDisplay(cap)} ETH</span>
+            <span className="ml-1.5 font-mono text-xs font-normal tracking-normal text-void-dim">
+              / {weiToEthDisplay(cap)} ETH
+            </span>
           </span>
-          <span className="text-xs text-void-dim">{ended ? "ended" : `${formatDuration(remaining)} left`}</span>
+          <span className={`pb-1 font-mono text-xs ${ended ? "text-void-dim" : "text-void-success"}`}>
+            {ended ? "session ended" : `${formatDuration(remaining)} left`}
+          </span>
         </div>
-        <div className="mt-3">
+        <div className="mt-4">
           <GateStrip states={gates} />
         </div>
-        <div className={`mt-3 ${ended && !revoked ? "opacity-40" : ""}`}>
+        <div className={`mt-3 ${ended ? "opacity-30" : ""}`}>
           <BudgetBar pct={spentPct} tone={revoked ? "revoked" : spentPct > 80 ? "warn" : "active"} />
         </div>
       </div>
 
-      <div className="mt-auto flex items-center justify-between border-t border-void-border px-4 py-2.5 text-xs">
-        <span className="text-void-dim">
+      <div className="relative mt-auto flex items-center justify-between border-t border-void-border px-5 py-3 text-xs">
+        <span className="font-mono text-void-dim">
           {s ? `${s.txCount}/${s.maxTxCount} tx` : `owner ${truncateAddress(vault.ownerAddress)}`}
         </span>
-        <span className="text-void-accent transition group-hover:translate-x-0.5">
+        <span className={`font-medium transition group-hover:translate-x-0.5 ${ended ? "text-void-muted" : "text-void-cta"}`}>
           {ended ? "View history →" : "Open console →"}
         </span>
       </div>

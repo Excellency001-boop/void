@@ -122,7 +122,7 @@ export function AgentConsole({
           value={sessionKey}
           onChange={(e) => setSessionKey(e.target.value)}
           placeholder="0x… (from vault creation)"
-          className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-borderStrong focus:outline-none"
+          className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
         />
       </div>
 
@@ -133,7 +133,7 @@ export function AgentConsole({
             value={target}
             onChange={(e) => setTarget(e.target.value)}
             placeholder="0x…"
-            className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-borderStrong focus:outline-none"
+            className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
           />
         </div>
         <div>
@@ -142,7 +142,7 @@ export function AgentConsole({
             value={valueEth}
             onChange={(e) => setValueEth(e.target.value)}
             inputMode="decimal"
-            className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text focus:border-void-borderStrong focus:outline-none"
+            className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
           />
         </div>
       </div>
@@ -153,7 +153,7 @@ export function AgentConsole({
           value={calldata}
           onChange={(e) => setCalldata(e.target.value)}
           placeholder="0x"
-          className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-borderStrong focus:outline-none"
+          className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
         />
       </div>
 

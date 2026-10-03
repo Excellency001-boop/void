@@ -8,7 +8,7 @@ import { ApiError, type CreateVaultResult } from "@/lib/api";
 import { useNetwork } from "@/lib/network-context";
 import { explorerAddressUrl } from "@/lib/networks";
 import { ethToWei, formatTimestamp, truncateAddress } from "@/lib/format";
-import { GateStrip } from "@/components/GateStrip";
+import { GateStrip, type GateArm } from "@/components/GateStrip";
 import { VaultSeal } from "@/components/VaultSeal";
 import { Card, PrimaryButton, SecondaryButton, Label, BackLink, TxLink, CopyButton } from "@/components/ui";
 
@@ -100,19 +100,25 @@ export default function CreateVaultPage() {
 
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-6">
+        <div className="pointer-events-none fixed inset-0 z-40 animate-flash bg-[radial-gradient(circle_at_50%_24%,rgba(52,211,153,0.4),transparent_58%)] motion-reduce:hidden" />
         <div>
           <BackLink href="/">Back to vaults</BackLink>
         </div>
 
-        <div className="flex flex-col items-center gap-2 text-center">
+        <div className="flex flex-col items-center gap-3 text-center">
           <VaultSeal />
-          <h1 className="text-3xl font-bold tracking-tight text-void-text">Your vault is live.</h1>
+          <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-void-success">Policy sealed</span>
+          <h1 className="text-5xl font-extrabold leading-none tracking-[-0.045em] text-void-text">
+            Your vault is{" "}
+            <span className="font-serif text-[1.14em] font-normal italic tracking-[-0.02em] text-void-success">live.</span>
+          </h1>
           <p className="max-w-md text-sm text-void-muted">
-            Sealed on {network.name}. From here the contract enforces this policy, not this app.
+            On {network.name}, from this block on, the contract enforces this policy. Not this app, not the agent.
           </p>
         </div>
 
-        <Card className="overflow-hidden shadow-[0_0_70px_-24px_rgba(52,211,153,0.4)]">
+        <Card className="relative overflow-hidden border-void-success/30 shadow-[0_0_90px_-20px_rgba(52,211,153,0.55)]">
+          <span className="pointer-events-none absolute inset-x-0 z-10 h-px animate-scan bg-[linear-gradient(90deg,transparent,rgba(110,255,200,1),transparent)] shadow-[0_0_18px_4px_rgba(52,211,153,0.5)] motion-reduce:hidden" />
           <div className="border-b border-void-border px-5 py-4">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-[11px] uppercase tracking-wider text-void-dim">Policy gates</span>
@@ -120,8 +126,12 @@ export default function CreateVaultPage() {
             </div>
             <GateStrip states={["armed", "armed", "armed", "armed", "armed"]} labels />
           </div>
-          <div className="flex flex-col gap-3 p-5">
-            <Field label="Vault address" value={result.vaultAddress} />
+          <div className="p-5">
+            <Label>Vault address</Label>
+            <div className="mt-2 flex items-start gap-3 rounded-sm border border-void-success/30 bg-void-successDim/20 px-4 py-3">
+              <span className="flex-1 break-all font-mono text-[15px] leading-snug text-void-text">{result.vaultAddress}</span>
+              <CopyButton value={result.vaultAddress} className="mt-0.5" />
+            </div>
           </div>
           <div className="grid grid-cols-3 divide-x divide-void-border border-t border-void-border">
             <SummaryStat label="Spend cap" value={`${budgetEth} ETH`} />
@@ -189,20 +199,26 @@ export default function CreateVaultPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-xl flex-col gap-6">
+    <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div>
         <BackLink href="/">Back to vaults</BackLink>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-semibold text-void-text">New Session Vault</h1>
-        <p className="mt-1 text-sm text-void-muted">
-          Define the policy once. It's compiled into the vault's on-chain validator. The agent
-          that receives the session key literally cannot produce a valid signature for anything
-          outside it.
+      <div className="max-w-2xl">
+        <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-void-cta">New session vault</span>
+        <h1 className="mt-3 text-5xl font-extrabold leading-[1.0] tracking-[-0.045em] text-void-text">
+          Write the rules.{" "}
+          <span className="font-serif text-[1.14em] font-normal italic tracking-[-0.02em] text-void-muted">
+            The contract keeps them.
+          </span>
+        </h1>
+        <p className="mt-4 text-sm leading-relaxed text-void-muted">
+          Define the policy once. It is compiled into the vault&apos;s on-chain validator, and the agent that
+          receives the session key cannot produce a valid signature for anything outside it.
         </p>
       </div>
 
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_330px]">
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div>
           <Label className="mb-2.5">Policy</Label>
@@ -214,7 +230,7 @@ export default function CreateVaultPage() {
                 value={owner}
                 onChange={(e) => setOwner(e.target.value)}
                 placeholder={address ?? "0x…"}
-                className="flex-1 rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-borderStrong focus:outline-none"
+                className="flex-1 rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
               />
               {address && (
                 <SecondaryButton type="button" onClick={() => setOwner(address)}>
@@ -255,7 +271,7 @@ export default function CreateVaultPage() {
                 value={budgetEth}
                 onChange={(e) => setBudgetEth(e.target.value)}
                 inputMode="decimal"
-                className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-sm text-void-text focus:border-void-borderStrong focus:outline-none"
+                className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-sm text-void-text focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
               />
             </div>
             <div>
@@ -265,7 +281,7 @@ export default function CreateVaultPage() {
                 onChange={(e) => setMaxTx(Number(e.target.value) || 0)}
                 type="number"
                 min={1}
-                className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-sm text-void-text focus:border-void-borderStrong focus:outline-none"
+                className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-sm text-void-text focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
               />
             </div>
           </div>
@@ -285,7 +301,7 @@ export default function CreateVaultPage() {
               value={allowedTarget}
               onChange={(e) => setAllowedTarget(e.target.value)}
               placeholder="0x…"
-              className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-borderStrong focus:outline-none"
+              className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
             />
           </div>
           <div>
@@ -294,7 +310,7 @@ export default function CreateVaultPage() {
               value={allowedSignature}
               onChange={(e) => setAllowedSignature(e.target.value)}
               placeholder="transfer(address,uint256)"
-              className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-borderStrong focus:outline-none"
+              className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
             />
             {selectorError && <p className="mt-1 text-xs text-void-danger">{selectorError}</p>}
             {selectorPreview && !selectorError && (
@@ -316,6 +332,73 @@ export default function CreateVaultPage() {
           {submitting ? "Deploying…" : "Deploy Session Vault"}
         </PrimaryButton>
       </form>
+      <aside className="lg:sticky lg:top-24 lg:self-start">
+        <PolicyPreview
+          armed={canSubmit}
+          budgetEth={budgetEth}
+          maxTx={maxTx}
+          durationLabel={DURATIONS.find((d) => d.seconds === duration)?.label ?? ""}
+          target={targetProvided && targetValid ? allowedTarget : ""}
+          signature={allowedSignature.trim()}
+        />
+      </aside>
+      </div>
+    </div>
+  );
+}
+
+function PolicyPreview({
+  armed,
+  budgetEth,
+  maxTx,
+  durationLabel,
+  target,
+  signature,
+}: {
+  armed: boolean;
+  budgetEth: string;
+  maxTx: number;
+  durationLabel: string;
+  target: string;
+  signature: string;
+}) {
+  const states: GateArm[] = armed ? ["armed", "armed", "armed", "armed", "armed"] : ["off", "off", "off", "off", "off"];
+  return (
+    <div
+      className={`overflow-hidden rounded-sm border transition duration-500 ${
+        armed
+          ? "border-void-accent/40 bg-void-surface shadow-[0_0_70px_-24px_rgba(108,99,255,0.7)]"
+          : "border-void-border bg-void-surface/70"
+      }`}
+    >
+      <div className="flex items-center justify-between border-b border-void-border px-5 py-3">
+        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-void-dim">Policy preview</span>
+        <span className={`font-mono text-[11px] ${armed ? "text-void-success" : "text-void-dim"}`}>
+          {armed ? "ready to seal" : "incomplete"}
+        </span>
+      </div>
+      <div className="px-5 py-5">
+        <GateStrip states={states} labels={false} />
+        <div className="mt-5 flex flex-col gap-3 font-mono text-xs">
+          <PreviewRow k="Spend cap" v={`${Number(budgetEth) > 0 ? budgetEth : "0"} ETH`} />
+          <PreviewRow k="Transactions" v={`${maxTx || 0} max`} />
+          <PreviewRow k="Session" v={durationLabel} />
+          <PreviewRow k="Pre-approved" v={target ? `${truncateAddress(target)}` : "none"} />
+          {signature && target && <PreviewRow k="Function" v={signature} />}
+        </div>
+      </div>
+      <div className="border-t border-void-border px-5 py-3 text-xs leading-relaxed text-void-muted">
+        Everything outside this is rejected on-chain, in the same fixed order, every time.
+      </div>
+    </div>
+  );
+}
+
+function PreviewRow({ k, v }: { k: string; v: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4">
+      <span className="text-void-dim">{k}</span>
+      <span className="truncate text-right text-void-text">{v}</span>
     </div>
   );
 }

@@ -38,10 +38,13 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col gap-24 lg:gap-28">
-      <section className="grid items-center gap-10 pt-4 lg:grid-cols-[1.12fr_1fr]">
+      <section className="grid items-center gap-10 pt-4 lg:grid-cols-[1fr_1.1fr]">
         <div className="flex flex-col gap-6">
-          <h1 className="max-w-3xl text-5xl font-bold leading-[1.02] tracking-[-0.04em] text-void-text sm:text-6xl lg:text-[4rem]">
-            An agent can propose anything. The contract decides what&apos;s real.
+          <h1 className="max-w-3xl text-5xl font-extrabold leading-[1.0] tracking-[-0.045em] text-void-text sm:text-6xl lg:text-[3.7rem]">
+            An agent can propose anything. The contract decides{" "}
+            <span className="font-serif text-[1.14em] font-normal italic tracking-[-0.02em] text-void-cta">
+              what&apos;s real.
+            </span>
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-void-muted">
             VOID compiles a spending policy directly into an on-chain ERC-4337 validator. Outside
@@ -60,8 +63,8 @@ export default function HomePage() {
             </a>
           </div>
         </div>
-        <div className="relative">
-          <div className="pointer-events-none absolute -inset-10 -z-10 rounded-full bg-[radial-gradient(closest-side,rgba(108,99,255,0.28),rgba(255,107,44,0.08)_60%,transparent)] blur-2xl" />
+        <div className="relative lg:-mr-10 lg:scale-[1.08]">
+          <div className="pointer-events-none absolute -inset-16 -z-10 rounded-full bg-[radial-gradient(closest-side,rgba(108,99,255,0.42),rgba(255,107,44,0.14)_55%,transparent)] blur-3xl" />
           <HeroDiagram />
         </div>
       </section>
@@ -117,7 +120,7 @@ export default function HomePage() {
               value={jumpAddress}
               onChange={(e) => setJumpAddress(e.target.value)}
               placeholder="0x… view an existing vault"
-              className="w-64 rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-borderStrong focus:outline-none"
+              className="w-64 rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
             />
             <SecondaryButton type="submit" disabled={!isAddress(jumpAddress)}>
               View

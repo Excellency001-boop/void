@@ -184,7 +184,7 @@ function DepositButton({ vaultAddress, onDeposited }: { vaultAddress: string; on
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         inputMode="decimal"
-        className="w-24 rounded-sm border border-void-border bg-void-raised px-2 py-1.5 font-mono text-xs text-void-text focus:border-void-borderStrong focus:outline-none"
+        className="w-24 rounded-sm border border-void-border bg-void-raised px-2 py-1.5 font-mono text-xs text-void-text focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
       />
       <SecondaryButton
         type="button"

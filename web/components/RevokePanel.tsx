@@ -92,7 +92,7 @@ export function RevokePanel({ vaultAddress, onRevoked }: { vaultAddress: string;
             value={ownerKey}
             onChange={(e) => setOwnerKey(e.target.value)}
             placeholder="0x…"
-            className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-borderStrong focus:outline-none"
+            className="mt-1 w-full rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
           />
         </div>
       ) : !isConnected ? (

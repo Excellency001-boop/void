@@ -1,15 +1,24 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Inter, IBM_Plex_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Inter, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ConnectWalletButton } from "@/components/ConnectWalletButton";
 import { NetworkSwitcher } from "@/components/NetworkSwitcher";
+import { Atmosphere } from "@/components/Atmosphere";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
   variable: "--font-display",
+  display: "swap",
+});
+
+const serif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-serif",
   display: "swap",
 });
 
@@ -46,11 +55,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${inter.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${display.variable} ${serif.variable} ${inter.variable} ${plexMono.variable}`}>
       <body className="min-h-screen font-sans text-void-text antialiased">
+        <Atmosphere />
         <Providers>
           <div className="mx-auto flex min-h-screen max-w-6xl flex-col">
-            <header className="sticky top-0 z-30 flex items-center justify-between border-b border-void-border bg-void-bg/70 px-6 py-4 backdrop-blur-md">
+            <header className="sticky top-0 z-30 flex items-center justify-between border-b border-void-border bg-void-bg/40 px-6 py-4 backdrop-blur-xl">
               <Link href="/" className="flex items-baseline gap-2">
                 <span className="font-mono text-lg font-semibold tracking-tight text-void-text">
                   VOID
