@@ -3,9 +3,9 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { createPublicClient, createWalletClient, http, defineChain, type Address, type Chain } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { foundry, baseSepolia, arbitrumSepolia } from "viem/chains";
+import { foundry, baseSepolia, arbitrumSepolia, base, arbitrum } from "viem/chains";
 
-const KNOWN_CHAINS: Chain[] = [foundry, baseSepolia, arbitrumSepolia];
+const KNOWN_CHAINS: Chain[] = [foundry, baseSepolia, arbitrumSepolia, base, arbitrum];
 
 /// Deploys VOID's fixed shared infrastructure to a chain: a real ERC-4337 v0.7 EntryPoint, a real
 /// Kernel v3.3 implementation + factory, a real ECDSAValidator, and our own PolicyValidator

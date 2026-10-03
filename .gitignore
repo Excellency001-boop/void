@@ -20,3 +20,6 @@ contracts/.env
 
 # OS
 .DS_Store
+
+# Agent run transcripts
+agent/runs/

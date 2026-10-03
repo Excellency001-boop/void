@@ -66,8 +66,23 @@ function loadDeployment() {
   );
 }
 
+/// Chains where the relayer's gas and any vault funds are play money. Anything else is treated as real
+/// money: the demo faucet is off and hard beta limits apply (see mainnetLimits and rateLimit.ts).
+const TEST_CHAIN_IDS = [31337, 84532, 421614];
+const isMainnet = !TEST_CHAIN_IDS.includes(env.CHAIN_ID);
+
+export const mainnetLimits = {
+  // The contracts are unaudited. A vault on mainnet can hold at most this much, for at most a week.
+  maxNativeSpendCapWei: BigInt(process.env.MAX_VAULT_CAP_WEI ?? "5000000000000000"), // 0.005 ETH
+  maxSessionSeconds: 7 * 24 * 60 * 60,
+  maxTxCount: 50n,
+  // The relayer pays gas for every create. Cap how many per day across all callers.
+  maxVaultsPerDay: Number(process.env.MAX_VAULTS_PER_DAY ?? "40"),
+};
+
 export const config = {
   ...env,
+  isMainnet,
   contractsDir: CONTRACTS_DIR,
   deployment: loadDeployment(),
 };

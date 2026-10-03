@@ -12,6 +12,8 @@ import {
   getSweepStatus,
   sweepVault,
 } from "../vaults.js";
+import { config, mainnetLimits } from "../config.js";
+import { allow } from "../rateLimit.js";
 
 const addressSchema = z.string().refine(isAddress, "must be a 0x-prefixed 20-byte address");
 const hexSchema = z.string().refine(isHex, "must be a 0x-prefixed hex string");
@@ -45,6 +47,18 @@ export function registerVaultRoutes(app: FastifyInstance) {
       return reply
         .code(400)
         .send({ error: "invalid_request", details: "initialTarget and initialSelector must be provided together" });
+    }
+
+    if (config.isMainnet) {
+      const l = mainnetLimits;
+      const problems: string[] = [];
+      if (BigInt(body.nativeSpendCapWei) > l.maxNativeSpendCapWei)
+        problems.push(`spend cap must be at most ${l.maxNativeSpendCapWei} wei during the mainnet beta`);
+      if (body.sessionDurationSeconds > l.maxSessionSeconds) problems.push("session must be 7 days or less");
+      if (BigInt(body.maxTxCount) > l.maxTxCount) problems.push(`max transactions must be at most ${l.maxTxCount}`);
+      if (problems.length) return reply.code(400).send({ error: "beta_limit", details: problems.join("; ") });
+      if (!allow("create:global", l.maxVaultsPerDay, 24 * 60 * 60_000))
+        return reply.code(429).send({ error: "daily_cap", details: "Daily vault creation limit reached. Try again tomorrow." });
     }
 
     const result = await createVault({
@@ -99,6 +113,9 @@ export function registerVaultRoutes(app: FastifyInstance) {
     const parsed = depositSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.code(400).send({ error: "invalid_request", details: parsed.error.flatten() });
+    }
+    if (config.isMainnet) {
+      return reply.code(403).send({ error: "demo_faucet_disabled", details: "The demo deposit is testnet only. Send ETH to the vault from your own wallet." });
     }
     const txHash = await depositToVault(request.params.address as Address, BigInt(parsed.data.amountWei));
     return { deposited: true, txHash };

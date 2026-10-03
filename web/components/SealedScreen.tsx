@@ -9,6 +9,7 @@ import { ethToWei, formatTimestamp, truncateAddress } from "@/lib/format";
 import { copyText } from "@/lib/clipboard";
 import { setHandoff } from "@/lib/handoff";
 import { useNetwork } from "@/lib/network-context";
+import { useFundVault } from "@/lib/useFundVault";
 import { GateStrip } from "@/components/GateStrip";
 import { VaultSeal } from "@/components/VaultSeal";
 import { Card, Label, PrimaryButton, SecondaryButton, CopyButton } from "@/components/ui";
@@ -16,7 +17,8 @@ import { Card, Label, PrimaryButton, SecondaryButton, CopyButton } from "@/compo
 /// A deliberately not-whitelisted address. The "simulate a rejection" step pre-fills it so the very
 /// first click produces a real on-chain rejection instead of an empty form.
 const UNAUTHORIZED_DEMO_TARGET = "0x00000000000000000000000000000000deadbeef";
-const FUND_CAP_ETH = 0.05;
+const TESTNET_FUND_CAP_ETH = 0.05;
+const MAINNET_FUND_CAP_ETH = 0.01;
 
 export interface SealedPolicy {
   budgetEth: string;
@@ -48,6 +50,7 @@ export function SealedScreen({
   api: ApiClient;
   policy: SealedPolicy;
 }) {
+  const fundVault = useFundVault();
   const { network: live, setNetworkId } = useNetwork();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [keySaved, setKeySaved] = useState(false);
@@ -211,7 +214,7 @@ export function SealedScreen({
         instructions={instructions}
         keySaved={keySaved}
         onKeySaved={() => setKeySaved(true)}
-        fund={(wei) => api.depositToVault(vaultAddress, wei)}
+        fund={(wei) => fundVault(network, api, vaultAddress, wei)}
         network={network}
         onSimulate={() => {
           setNetworkId(network.id);
@@ -336,7 +339,8 @@ function NextSteps({
   const [instrState, setInstrState] = useState<"idle" | "ok" | "fail">("idle");
 
   const amountNum = Number(amount);
-  const amountValid = Number.isFinite(amountNum) && amountNum > 0 && amountNum <= FUND_CAP_ETH;
+  const fundCap = network.testnet ? TESTNET_FUND_CAP_ETH : MAINNET_FUND_CAP_ETH;
+  const amountValid = Number.isFinite(amountNum) && amountNum > 0 && amountNum <= fundCap;
 
   async function send() {
     setBusy(true);
@@ -344,8 +348,12 @@ function NextSteps({
     try {
       const res = await fund(ethToWei(amount));
       setFunded({ tx: res.txHash, eth: amount });
-    } catch {
-      setError("Funding failed. Check the amount and the relayer balance, then try again.");
+    } catch (e) {
+      setError(
+        network.testnet
+          ? "Funding failed. Check the amount and the relayer balance, then try again."
+          : `Funding failed. ${e instanceof Error && e.message.startsWith("Connect") ? e.message : "The wallet declined or the transaction failed. Nothing was sent."}`
+      );
     } finally {
       setBusy(false);
     }
@@ -373,8 +381,17 @@ function NextSteps({
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium text-void-text">Fund the vault</div>
           <p className="mt-1 text-xs leading-relaxed text-void-muted">
-            The agent pays gas from the vault, so give it a little. On mainnet you would send ETH from your own wallet to{" "}
-            <span className="font-mono text-void-text">{truncateAddress(vaultAddress)}</span>.
+            {network.testnet ? (
+              <>
+                The agent pays gas from the vault, so give it a little. On mainnet you would send ETH from your own wallet to{" "}
+                <span className="font-mono text-void-text">{truncateAddress(vaultAddress)}</span>.
+              </>
+            ) : (
+              <>
+                This is real ETH, sent from your own wallet to{" "}
+                <span className="font-mono text-void-text">{truncateAddress(vaultAddress)}</span>. Your wallet asks you to confirm. Keep it small: this is an unaudited beta.
+              </>
+            )}
           </p>
           <div aria-live="polite">
             {funded ? (
@@ -396,17 +413,17 @@ function NextSteps({
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   inputMode="decimal"
-                  aria-label="Amount of test ETH to send"
+                  aria-label={network.testnet ? "Amount of test ETH to send" : "Amount of ETH to send"}
                   className="w-28 rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
                 />
                 <span className="text-xs text-void-dim">ETH</span>
                 <SecondaryButton type="button" disabled={busy || !amountValid} onClick={send}>
-                  {busy ? "Sending…" : "Send test ETH"}
+                  {busy ? "Sending…" : network.testnet ? "Send test ETH" : "Send ETH from wallet"}
                 </SecondaryButton>
               </div>
             )}
             {!funded && amount !== "" && !amountValid && (
-              <p className="mt-2 text-xs text-void-warn">Demo funding takes 0 to {FUND_CAP_ETH} ETH.</p>
+              <p className="mt-2 text-xs text-void-warn">{network.testnet ? "Demo funding" : "Mainnet beta funding"} takes 0 to {fundCap} ETH.</p>
             )}
             {error && <p className="mt-2 text-xs text-void-danger">{error}</p>}
           </div>

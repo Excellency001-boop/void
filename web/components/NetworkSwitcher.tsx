@@ -36,7 +36,7 @@ export function NetworkSwitcher() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-sm border border-void-border bg-void-surface py-1 shadow-lg">
+          <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-sm border border-void-border bg-void-surface py-1 shadow-lg">
             {NETWORKS.map((n) => (
               <button
                 key={n.id}
@@ -49,6 +49,11 @@ export function NetworkSwitcher() {
                   className={`h-1.5 w-1.5 rounded-full ${n.id === network.id ? "bg-void-accent" : "bg-void-dim"}`}
                 />
                 {n.name}
+                {!n.testnet && (
+                  <span className="ml-auto rounded-full border border-void-warn/40 px-1.5 py-px font-mono text-[9px] uppercase text-void-warn">
+                    real
+                  </span>
+                )}
               </button>
             ))}
           </div>

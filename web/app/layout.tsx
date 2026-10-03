@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Inter, IBM_Plex_Mono, Instrument_Serif } from "nex
 import Link from "next/link";
 import "./globals.css";
 import { Providers } from "./providers";
+import { MainnetBanner } from "@/components/MainnetBanner";
 import { ConnectWalletButton } from "@/components/ConnectWalletButton";
 import { NetworkSwitcher } from "@/components/NetworkSwitcher";
 import { Atmosphere } from "@/components/Atmosphere";
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <ConnectWalletButton />
               </div>
             </header>
+            <MainnetBanner />
             <main className="flex-1 px-6 py-8">{children}</main>
             <footer className="border-t border-void-border px-6 py-4 text-xs text-void-dim">
               PolicyValidator enforces every action on-chain. This dashboard only reads and relays.

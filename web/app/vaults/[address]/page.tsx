@@ -24,6 +24,7 @@ import { RevokePanel } from "@/components/RevokePanel";
 import { SweepPanel } from "@/components/SweepPanel";
 import { AgentConsole } from "@/components/AgentConsole";
 import { takeHandoff, type Handoff } from "@/lib/handoff";
+import { useFundVault } from "@/lib/useFundVault";
 import { PerimeterRing } from "@/components/PerimeterRing";
 import { GateStrip, type GateArm } from "@/components/GateStrip";
 
@@ -294,7 +295,8 @@ export default function VaultDetailPage() {
 }
 
 function DepositButton({ vaultAddress, onDeposited }: { vaultAddress: string; onDeposited: () => void }) {
-  const { api } = useNetwork();
+  const { api, network } = useNetwork();
+  const fundVault = useFundVault();
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("0.005");
   const [busy, setBusy] = useState(false);
@@ -303,7 +305,7 @@ function DepositButton({ vaultAddress, onDeposited }: { vaultAddress: string; on
   if (!open) {
     return (
       <SecondaryButton type="button" onClick={() => setOpen(true)}>
-        Deposit (demo)
+        {network.testnet ? "Deposit (demo)" : "Fund from wallet"}
       </SecondaryButton>
     );
   }
@@ -323,11 +325,11 @@ function DepositButton({ vaultAddress, onDeposited }: { vaultAddress: string; on
           setBusy(true);
           setError(null);
           try {
-            await api.depositToVault(vaultAddress, ethToWei(amount));
+            await fundVault(network, api, vaultAddress, ethToWei(amount));
             onDeposited();
             setOpen(false);
           } catch (err) {
-            setError(err instanceof ApiError ? err.message : "Deposit failed");
+            setError(err instanceof ApiError ? err.message : err instanceof Error && err.message.startsWith("Connect") ? err.message : "Deposit failed");
           } finally {
             setBusy(false);
           }

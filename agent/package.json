@@ -1,0 +1,16 @@
+{
+  "name": "@void/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A real LLM agent that holds a VOID session key and tries to move money. The contract decides.",
+  "scripts": {
+    "agent": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

@@ -4,6 +4,8 @@ export interface NetworkConfig {
   name: string;
   apiUrl: string;
   explorerBase: string;
+  /// Testnets get the demo faucet and no beta limits. Mainnets are real money, capped, unaudited.
+  testnet: boolean;
 }
 
 // Each network is served by its own deployed API instance (see api/README.md) — not one
@@ -18,6 +20,7 @@ export const NETWORKS: NetworkConfig[] = [
     name: "Base Sepolia",
     apiUrl: process.env.NEXT_PUBLIC_BASE_API_URL ?? "https://void-api-production-fc5e.up.railway.app",
     explorerBase: "https://sepolia.basescan.org",
+    testnet: true,
   },
   {
     id: "arbitrum-sepolia",
@@ -25,7 +28,34 @@ export const NETWORKS: NetworkConfig[] = [
     name: "Arbitrum Sepolia",
     apiUrl: process.env.NEXT_PUBLIC_ARBITRUM_API_URL ?? "https://void-api-arbitrum-production.up.railway.app",
     explorerBase: "https://sepolia.arbiscan.io",
+    testnet: true,
   },
+  // Mainnets appear only once their API URL is configured, so the switcher never offers a chain
+  // that has nothing behind it.
+  ...(process.env.NEXT_PUBLIC_BASE_MAINNET_API_URL
+    ? [
+        {
+          id: "base",
+          chainId: 8453,
+          name: "Base",
+          apiUrl: process.env.NEXT_PUBLIC_BASE_MAINNET_API_URL,
+          explorerBase: "https://basescan.org",
+          testnet: false,
+        },
+      ]
+    : []),
+  ...(process.env.NEXT_PUBLIC_ARBITRUM_MAINNET_API_URL
+    ? [
+        {
+          id: "arbitrum-one",
+          chainId: 42161,
+          name: "Arbitrum One",
+          apiUrl: process.env.NEXT_PUBLIC_ARBITRUM_MAINNET_API_URL,
+          explorerBase: "https://arbiscan.io",
+          testnet: false,
+        },
+      ]
+    : []),
 ];
 
 export const DEFAULT_NETWORK = NETWORKS[0];

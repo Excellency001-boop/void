@@ -1,9 +1,9 @@
 import { createPublicClient, createWalletClient, http, defineChain, type Chain } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { foundry, baseSepolia, arbitrumSepolia } from "viem/chains";
+import { foundry, baseSepolia, arbitrumSepolia, base, arbitrum } from "viem/chains";
 import { config } from "./config.js";
 
-const KNOWN_CHAINS: Chain[] = [foundry, baseSepolia, arbitrumSepolia];
+const KNOWN_CHAINS: Chain[] = [foundry, baseSepolia, arbitrumSepolia, base, arbitrum];
 
 function resolveChain(): Chain {
   const known = KNOWN_CHAINS.find((c) => c.id === config.CHAIN_ID);
