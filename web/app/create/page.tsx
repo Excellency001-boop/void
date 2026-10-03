@@ -9,6 +9,7 @@ import { useNetwork } from "@/lib/network-context";
 import { explorerAddressUrl } from "@/lib/networks";
 import { ethToWei, formatTimestamp, truncateAddress } from "@/lib/format";
 import { GateStrip, type GateArm } from "@/components/GateStrip";
+import { PerimeterRing } from "@/components/PerimeterRing";
 import { VaultSeal } from "@/components/VaultSeal";
 import { Card, PrimaryButton, SecondaryButton, Label, BackLink, TxLink, CopyButton } from "@/components/ui";
 
@@ -150,32 +151,20 @@ export default function CreateVaultPage() {
           </div>
         </Card>
 
-        <Card className="flex flex-col gap-3 border-void-warn/25 bg-void-warnDim/10 p-5">
-          <div>
-            <Label>Session key (shown once, never stored)</Label>
-            <p className="mt-1.5 text-xs leading-relaxed text-void-muted">
-              Hand this to your agent. It can sign for this vault, but never outside the policy. Lose it
-              and the session simply stops working. You can still revoke, and your funds stay yours.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 truncate rounded-sm border border-void-warn/30 bg-void-raised px-3 py-2 font-mono text-xs text-void-text">
-              {result.sessionPrivateKey}
-            </code>
-            <CopyTextButton text={result.sessionPrivateKey} label="Copy" copiedLabel="Copied" />
-          </div>
-          <CopyTextButton
-            text={instructions}
-            label="Copy agent instructions"
-            copiedLabel="Instructions copied"
-            className="w-full"
-          />
-        </Card>
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-void-cta">Next, three steps</span>
+          <span className="h-px flex-1 bg-gradient-to-r from-void-borderStrong to-transparent" />
+        </div>
+
+        <NextSteps
+          vaultAddress={result.vaultAddress}
+          sessionKey={result.sessionPrivateKey}
+          instructions={instructions}
+          simulateHref={simulateHref}
+          fund={(wei) => api.depositToVault(result.vaultAddress, wei)}
+        />
 
         <div className="flex flex-col gap-3">
-          <Link href={simulateHref}>
-            <PrimaryButton className="w-full py-3 text-base">Simulate a rejected action →</PrimaryButton>
-          </Link>
           <div className="flex gap-3">
             <a href={explorerUrl} target="_blank" rel="noreferrer" className="flex-1">
               <SecondaryButton type="button" className="w-full">
@@ -222,7 +211,7 @@ export default function CreateVaultPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div>
           <Label className="mb-2.5">Policy</Label>
-          <Card className="flex flex-col gap-4 p-5">
+          <Card className="flex flex-col gap-4 p-5 transition duration-300 focus-within:border-void-accent/40 focus-within:shadow-[0_0_60px_-26px_rgba(108,99,255,0.7)]">
           <div>
             <Label>Owner address</Label>
             <div className="mt-1 flex gap-2">
@@ -290,7 +279,7 @@ export default function CreateVaultPage() {
 
         <div>
           <Label className="mb-2.5">First permission (optional)</Label>
-          <Card className="flex flex-col gap-4 p-5">
+          <Card className="flex flex-col gap-4 p-5 transition duration-300 focus-within:border-void-accent/40 focus-within:shadow-[0_0_60px_-26px_rgba(108,99,255,0.7)]">
           <p className="text-xs text-void-dim">
             One contract + function the agent can call immediately, installed atomically with the
             policy. Add more permissions later.
@@ -335,6 +324,9 @@ export default function CreateVaultPage() {
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <PolicyPreview
           armed={canSubmit}
+          ownerOk={ownerValid}
+          limitsOk={Number(budgetEth) > 0 && maxTx > 0}
+          permissionOk={targetProvided && targetValid && !selectorError}
           budgetEth={budgetEth}
           maxTx={maxTx}
           durationLabel={DURATIONS.find((d) => d.seconds === duration)?.label ?? ""}
@@ -349,6 +341,9 @@ export default function CreateVaultPage() {
 
 function PolicyPreview({
   armed,
+  ownerOk,
+  limitsOk,
+  permissionOk,
   budgetEth,
   maxTx,
   durationLabel,
@@ -356,39 +351,51 @@ function PolicyPreview({
   signature,
 }: {
   armed: boolean;
+  ownerOk: boolean;
+  limitsOk: boolean;
+  permissionOk: boolean;
   budgetEth: string;
   maxTx: number;
   durationLabel: string;
   target: string;
   signature: string;
 }) {
+  const progress = (ownerOk ? 0.4 : 0) + (limitsOk ? 0.3 : 0) + (permissionOk ? 0.3 : 0);
   const states: GateArm[] = armed ? ["armed", "armed", "armed", "armed", "armed"] : ["off", "off", "off", "off", "off"];
   return (
     <div
       className={`overflow-hidden rounded-sm border transition duration-500 ${
         armed
-          ? "border-void-accent/40 bg-void-surface shadow-[0_0_70px_-24px_rgba(108,99,255,0.7)]"
+          ? "border-void-accent/40 bg-void-surface shadow-[0_0_80px_-24px_rgba(108,99,255,0.8)]"
           : "border-void-border bg-void-surface/70"
       }`}
     >
       <div className="flex items-center justify-between border-b border-void-border px-5 py-3">
-        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-void-dim">Policy preview</span>
+        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-void-dim">Policy perimeter</span>
         <span className={`font-mono text-[11px] ${armed ? "text-void-success" : "text-void-dim"}`}>
-          {armed ? "ready to seal" : "incomplete"}
+          {Math.round(progress * 100)}% closed
         </span>
       </div>
-      <div className="px-5 py-5">
-        <GateStrip states={states} labels={false} />
-        <div className="mt-5 flex flex-col gap-3 font-mono text-xs">
-          <PreviewRow k="Spend cap" v={`${Number(budgetEth) > 0 ? budgetEth : "0"} ETH`} />
-          <PreviewRow k="Transactions" v={`${maxTx || 0} max`} />
-          <PreviewRow k="Session" v={durationLabel} />
-          <PreviewRow k="Pre-approved" v={target ? `${truncateAddress(target)}` : "none"} />
-          {signature && target && <PreviewRow k="Function" v={signature} />}
+      <div className="relative flex flex-col items-center px-5 pb-2 pt-6">
+        <span className="pointer-events-none absolute left-1/2 top-4 -z-0 h-32 w-32 -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(108,99,255,0.35),transparent)] blur-2xl" />
+        <div className="relative">
+          <PerimeterRing progress={progress} size={150} state="building" duration={0.7} />
+        </div>
+        <div className="mt-4 w-full">
+          <GateStrip states={states} />
         </div>
       </div>
+      <div className="flex flex-col gap-3 px-5 py-5 font-mono text-xs">
+        <PreviewRow k="Spend cap" v={`${Number(budgetEth) > 0 ? budgetEth : "0"} ETH`} />
+        <PreviewRow k="Transactions" v={`${maxTx || 0} max`} />
+        <PreviewRow k="Session" v={durationLabel} />
+        <PreviewRow k="Pre-approved" v={target ? `${truncateAddress(target)}` : "none"} />
+        {signature && target && <PreviewRow k="Function" v={signature} />}
+      </div>
       <div className="border-t border-void-border px-5 py-3 text-xs leading-relaxed text-void-muted">
-        Everything outside this is rejected on-chain, in the same fixed order, every time.
+        {permissionOk
+          ? "Everything outside this is rejected on-chain, in the same fixed order, every time."
+          : "With no pre-approved call, the agent can do nothing at all until you add one."}
       </div>
     </div>
   );
@@ -503,5 +510,135 @@ function Field({ label, value }: { label: string; value: string }) {
         <CopyButton value={value} />
       </div>
     </div>
+  );
+}
+
+function StepDot({ n, done, active }: { n: number; done: boolean; active: boolean }) {
+  return (
+    <span
+      className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border font-mono text-xs transition ${
+        done
+          ? "border-void-success bg-void-successDim text-void-success"
+          : active
+            ? "border-void-cta bg-void-cta/15 text-void-cta"
+            : "border-void-borderStrong text-void-dim"
+      }`}
+    >
+      {done ? (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      ) : (
+        n
+      )}
+    </span>
+  );
+}
+
+function NextSteps({
+  vaultAddress,
+  sessionKey,
+  instructions,
+  simulateHref,
+  fund,
+}: {
+  vaultAddress: string;
+  sessionKey: string;
+  instructions: string;
+  simulateHref: string;
+  fund: (wei: string) => Promise<{ txHash: string }>;
+}) {
+  const [amount, setAmount] = useState("0.006");
+  const [busy, setBusy] = useState(false);
+  const [funded, setFunded] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [keyCopied, setKeyCopied] = useState(false);
+
+  async function send() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fund(ethToWei(amount));
+      setFunded(res.txHash);
+    } catch {
+      setError("Couldn't send that. Check the amount and try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="divide-y divide-void-border overflow-hidden">
+      <div className="flex gap-4 p-5">
+        <StepDot n={1} done={!!funded} active={!funded} />
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium text-void-text">Fund the vault</div>
+          <p className="mt-1 text-xs leading-relaxed text-void-muted">
+            The agent pays gas from the vault, so give it a little. On mainnet you would send ETH from your own
+            wallet to <span className="font-mono text-void-text">{truncateAddress(vaultAddress)}</span>.
+          </p>
+          {funded ? (
+            <div className="mt-3 flex items-center gap-2 text-xs text-void-success">
+              <span className="font-mono">{amount} ETH in the vault</span>
+              <span className="text-void-dim">·</span>
+              <TxLink hash={funded} label="tx" />
+            </div>
+          ) : (
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                inputMode="decimal"
+                className="w-28 rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
+              />
+              <span className="text-xs text-void-dim">ETH</span>
+              <SecondaryButton type="button" disabled={busy || !(Number(amount) > 0)} onClick={send}>
+                {busy ? "Sending…" : "Send test ETH"}
+              </SecondaryButton>
+            </div>
+          )}
+          {error && <p className="mt-2 text-xs text-void-danger">{error}</p>}
+        </div>
+      </div>
+
+      <div className="flex gap-4 border-void-warn/20 bg-void-warnDim/10 p-5">
+        <StepDot n={2} done={keyCopied} active={!!funded && !keyCopied} />
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium text-void-text">Hand the agent its key</div>
+          <p className="mt-1 text-xs leading-relaxed text-void-muted">
+            Shown once, never stored. It can sign for this vault but never outside the policy. Lose it and the
+            session simply stops. Your funds stay yours.
+          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <code className="min-w-0 flex-1 truncate rounded-sm border border-void-warn/30 bg-void-raised px-3 py-2 font-mono text-xs text-void-text">
+              {sessionKey}
+            </code>
+            <SecondaryButton
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(sessionKey);
+                setKeyCopied(true);
+              }}
+            >
+              {keyCopied ? "Copied" : "Copy"}
+            </SecondaryButton>
+          </div>
+          <CopyTextButton text={instructions} label="Copy agent instructions" copiedLabel="Instructions copied" className="mt-2 w-full" />
+        </div>
+      </div>
+
+      <div className="flex gap-4 p-5">
+        <StepDot n={3} done={false} active={!!funded && keyCopied} />
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium text-void-text">Watch it get rejected</div>
+          <p className="mt-1 text-xs leading-relaxed text-void-muted">
+            Open the console as the agent and try something the policy never allowed. The contract says no, on-chain.
+          </p>
+          <Link href={simulateHref} className="mt-3 block">
+            <PrimaryButton className="w-full py-3 text-base">Simulate a rejected action →</PrimaryButton>
+          </Link>
+        </div>
+      </div>
+    </Card>
   );
 }

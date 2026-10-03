@@ -7,6 +7,7 @@ import { useNetwork } from "@/lib/network-context";
 import { formatDuration, pctOf, truncateAddress, weiToEthDisplay } from "@/lib/format";
 import { Badge, BudgetBar } from "@/components/ui";
 import { GateStrip, type GateArm } from "@/components/GateStrip";
+import { PerimeterRing } from "@/components/PerimeterRing";
 
 export function VaultCard({ vault }: { vault: VaultRecord }) {
   const { network, api } = useNetwork();
@@ -31,6 +32,8 @@ export function VaultCard({ vault }: { vault: VaultRecord }) {
   const cap = s?.nativeSpendCap ?? vault.policy.nativeSpendCap;
   const spent = s?.nativeSpent ?? "0";
   const spentPct = pctOf(spent, cap);
+  const total = Math.max(1, vault.policy.validUntil - vault.policy.validAfter);
+  const sessionLeft = ended ? 0 : Math.max(0.04, Math.min(1, remaining / total));
   const gates: GateArm[] = ended ? ["closed", "off", "off", "off", "off"] : ["armed", "armed", "armed", "armed", "armed"];
 
   return (
@@ -64,23 +67,26 @@ export function VaultCard({ vault }: { vault: VaultRecord }) {
         </Badge>
       </div>
 
-      <div className="relative px-5 pb-5 pt-5">
-        <div className="flex items-end justify-between">
+      <div className="relative flex items-center gap-4 px-5 pb-5 pt-4">
+        <div className="min-w-0 flex-1">
           <span className={`font-display text-3xl font-bold tracking-tight ${ended ? "text-void-dim" : "text-void-text"}`}>
             {weiToEthDisplay(spent)}
             <span className="ml-1.5 font-mono text-xs font-normal tracking-normal text-void-dim">
               / {weiToEthDisplay(cap)} ETH
             </span>
           </span>
-          <span className={`pb-1 font-mono text-xs ${ended ? "text-void-dim" : "text-void-success"}`}>
-            {ended ? "session ended" : `${formatDuration(remaining)} left`}
+          <div className="mt-4">
+            <GateStrip states={gates} />
+          </div>
+          <div className={`mt-3 ${ended ? "opacity-30" : ""}`}>
+            <BudgetBar pct={spentPct} tone={revoked ? "revoked" : spentPct > 80 ? "warn" : "active"} />
+          </div>
+        </div>
+        <div className="flex flex-shrink-0 flex-col items-center gap-1.5">
+          <PerimeterRing progress={sessionLeft} size={84} state={ended ? "dead" : "sealed"} duration={1.1} />
+          <span className={`font-mono text-[11px] ${ended ? "text-void-dim" : "text-void-success"}`}>
+            {ended ? "ended" : `${formatDuration(remaining)} left`}
           </span>
-        </div>
-        <div className="mt-4">
-          <GateStrip states={gates} />
-        </div>
-        <div className={`mt-3 ${ended ? "opacity-30" : ""}`}>
-          <BudgetBar pct={spentPct} tone={revoked ? "revoked" : spentPct > 80 ? "warn" : "active"} />
         </div>
       </div>
 
