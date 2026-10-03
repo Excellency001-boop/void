@@ -3,7 +3,8 @@
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { ApiError } from "@/lib/api";
+import { ApiError, createApiClient } from "@/lib/api";
+import { NETWORKS, networkById } from "@/lib/networks";
 import { useNetwork } from "@/lib/network-context";
 import { weiToEthDisplay, formatDuration, formatTimestamp, pctOf, ethToWei } from "@/lib/format";
 import {
@@ -29,7 +30,7 @@ import { GateStrip, type GateArm } from "@/components/GateStrip";
 export default function VaultDetailPage() {
   const { address } = useParams<{ address: string }>();
   const queryClient = useQueryClient();
-  const { network, api } = useNetwork();
+  const { network, api, setNetworkId } = useNetwork();
 
   // The success screen hands the session key over through sessionStorage, once, instead of a URL.
   const [handoff, setHandoffState] = useState<Handoff | null>(null);
@@ -54,6 +55,34 @@ export default function VaultDetailPage() {
     refetchInterval: 8_000,
   });
 
+  // A vault lives on exactly one chain. If this address is not on the active one, ask the other
+  // chains' APIs before telling the visitor it does not exist, so a shared link just works.
+  // The API answers 200 with an all-zero policy for any address that is not a vault on this chain.
+  const emptyPolicy =
+    !!statusQuery.data && (statusQuery.data.validUntil === 0 || /^0x0{40}$/i.test(statusQuery.data.owner));
+  const notHere = statusQuery.isError || emptyPolicy;
+
+  const elsewhereQuery = useQuery({
+    queryKey: ["vault-elsewhere", address, network.id],
+    enabled: notHere,
+    retry: false,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const others = NETWORKS.filter((n) => n.id !== network.id);
+      const hits = await Promise.all(
+        others.map(async (n) => {
+          try {
+            const st = await createApiClient(n.apiUrl).getVaultStatus(address);
+            return st && st.validUntil !== 0 ? n.id : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+      return hits.find((id): id is string => id !== null) ?? null;
+    },
+  });
+
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ["vault-status", network.id, address] });
     queryClient.invalidateQueries({ queryKey: ["vault-history", network.id, address] });
@@ -63,10 +92,30 @@ export default function VaultDetailPage() {
     return <div className="font-mono text-sm text-void-dim">Reading the chain…</div>;
   }
 
-  if (statusQuery.isError || !statusQuery.data) {
+  if (notHere || !statusQuery.data) {
+    if (elsewhereQuery.isLoading) {
+      return <div className="font-mono text-sm text-void-dim">Checking the other chains…</div>;
+    }
+    const foundId = elsewhereQuery.data;
+    if (foundId) {
+      const found = networkById(foundId);
+      return (
+        <div className="flex flex-col gap-4 rounded-sm border border-void-accent/40 bg-void-surface px-5 py-5">
+          <div>
+            <div className="font-display text-xl font-bold text-void-text">This vault lives on {found.name}.</div>
+            <p className="mt-1 text-sm text-void-muted">
+              You are viewing {network.name}. A vault exists on exactly one chain, so switch to see it.
+            </p>
+          </div>
+          <div>
+            <SecondaryButton onClick={() => setNetworkId(found.id)}>Switch to {found.name}</SecondaryButton>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="rounded-sm border border-void-danger/30 bg-void-dangerDim/10 px-4 py-3 text-sm text-void-danger">
-        No vault found at this address on {network.name}. Check the address, and check you are on the right network.
+        No vault found at this address on any supported chain. Check the address and try again.
       </div>
     );
   }

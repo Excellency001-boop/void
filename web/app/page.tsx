@@ -10,6 +10,7 @@ import { PrimaryButton, SecondaryButton, Label } from "@/components/ui";
 import { PipelineDemo } from "@/components/PipelineDemo";
 import { VaultCard } from "@/components/VaultCard";
 import { HeroDiagram } from "@/components/HeroDiagram";
+import { Deployments } from "@/components/Deployments";
 
 export default function HomePage() {
   const router = useRouter();
@@ -67,7 +68,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="relative lg:-mr-10 lg:scale-[1.08]">
-          <div className="pointer-events-none absolute -inset-16 -z-10 rounded-full bg-[radial-gradient(closest-side,rgba(108,99,255,0.42),rgba(255,107,44,0.14)_55%,transparent)] blur-3xl" />
+          <div className="pointer-events-none absolute -inset-x-2 -inset-y-10 -z-10 sm:-inset-16 rounded-full bg-[radial-gradient(closest-side,rgba(108,99,255,0.42),rgba(255,107,44,0.14)_55%,transparent)] blur-3xl" />
           <HeroDiagram />
         </div>
       </section>
@@ -109,6 +110,8 @@ export default function HomePage() {
         <PipelineDemo />
       </section>
 
+      <Deployments />
+
       <section className="flex flex-col gap-3 border-t border-void-border pt-10">
         <h2 className="text-2xl font-semibold text-void-text">Session Vaults</h2>
         <p className="max-w-2xl text-sm leading-relaxed text-void-muted">
@@ -118,12 +121,12 @@ export default function HomePage() {
           <Link href="/create">
             <PrimaryButton>+ New Session Vault</PrimaryButton>
           </Link>
-          <form onSubmit={goToVault} className="flex items-center gap-2">
+          <form onSubmit={goToVault} className="flex w-full items-center gap-2 sm:w-auto">
             <input
               value={jumpAddress}
               onChange={(e) => setJumpAddress(e.target.value)}
               placeholder="0x… view an existing vault"
-              className="w-64 rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
+              className="min-w-0 flex-1 rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs sm:w-64 sm:flex-none text-void-text placeholder:text-void-dim focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
             />
             <SecondaryButton type="submit" disabled={!isAddress(jumpAddress)}>
               View
@@ -131,7 +134,7 @@ export default function HomePage() {
           </form>
         </div>
 
-        <div className="mt-8 flex items-baseline justify-between border-t border-void-border pt-8">
+        <div className="mt-8 flex flex-col gap-1 border-t border-void-border pt-8 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
           <Label>Recent on {network.name}</Label>
           <span className="text-xs text-void-dim">Any vault opens by address. The chain is the source of truth.</span>
         </div>

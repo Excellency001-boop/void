@@ -131,7 +131,14 @@ export function createApiClient(baseUrl: string) {
   }
 
   return {
-    health: () => request<{ status: string; chainId: number; chainName: string; relayer: string }>("/health"),
+    health: () =>
+      request<{
+        status: string;
+        chainId: number;
+        chainName: string;
+        relayer: string;
+        contracts: { policyValidator: string; expirySweepExecutor?: string; kernelFactory: string; entryPoint: string };
+      }>("/health"),
 
     createVault: (params: CreateVaultParams) =>
       request<CreateVaultResult>("/vaults", { method: "POST", body: JSON.stringify(params) }),

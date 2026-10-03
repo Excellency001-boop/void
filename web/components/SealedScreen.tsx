@@ -155,7 +155,7 @@ export function SealedScreen({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 divide-x divide-void-border border-t border-void-border">
+        <div className="grid grid-cols-1 divide-y divide-void-border border-t border-void-border min-[460px]:grid-cols-3 min-[460px]:divide-x min-[460px]:divide-y-0">
           <Stat label="Spend cap" value={`${policy.budgetEth} ETH`} />
           <Stat label="Max transactions" value={String(policy.maxTx)} />
           <Stat label="Expires" value={policy.durationLabel} sub={formatTimestamp(shownExpiry)} />
@@ -165,7 +165,7 @@ export function SealedScreen({
           {policy.allowedTarget ? (
             <>
               Pre-approved: <span className="font-mono text-void-text">{truncateAddress(policy.allowedTarget)}</span>{" "}
-              <span className="font-mono text-void-dim">{policy.allowedSignature}</span>
+              <span className="break-all font-mono text-void-dim">{policy.allowedSignature}</span>
             </>
           ) : (
             "No pre-approved calls. Everything the agent tries is rejected until you add one."
