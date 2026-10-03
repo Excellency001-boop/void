@@ -36,7 +36,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 const description =
-  "Give an AI agent real economic agency without giving it the ability to rug you. Session Vaults compile a spending policy into an on-chain ERC-4337 validator. The agent can't produce a valid signature for anything outside it.";
+  "Session keys for agents that the contract itself enforces. VOID compiles a spending policy into an on-chain ERC-4337 validator. Outside it, the agent cannot produce a signature the contract will accept.";
 
 export const metadata: Metadata = {
   title: "VOID | Session Vaults",

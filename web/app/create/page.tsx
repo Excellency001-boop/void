@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
 import { isAddress, toFunctionSelector, type Hex } from "viem";
@@ -75,7 +75,7 @@ export default function CreateVaultPage() {
       setDeployedAt(Math.floor(Date.now() / 1000));
       setResult(res);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong deploying the vault.");
+      setError(err instanceof ApiError ? `Deployment failed. Nothing was sealed. Reason: ${err.message}.` : "Deployment failed. Nothing was sealed. Check the owner address and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -317,14 +317,18 @@ export default function CreateVaultPage() {
           </div>
         )}
 
-        <PrimaryButton type="submit" disabled={!canSubmit || submitting}>
-          {submitting ? "Deploying…" : "Deploy Session Vault"}
+        <PrimaryButton type="submit" disabled={!canSubmit || submitting} className="py-3.5 text-base">
+          {submitting ? "Sealing the perimeter…" : "Seal this policy on-chain"}
         </PrimaryButton>
+        <p className="-mt-3 text-center font-mono text-[11px] text-void-dim">
+          One transaction. Policy and permissions install together, so there is no unguarded moment.
+        </p>
       </form>
       <aside className="lg:sticky lg:top-24 lg:self-start">
         <PolicyPreview
           armed={canSubmit}
           ownerOk={ownerValid}
+          sealing={submitting}
           limitsOk={Number(budgetEth) > 0 && maxTx > 0}
           permissionOk={targetProvided && targetValid && !selectorError}
           budgetEth={budgetEth}
@@ -339,8 +343,16 @@ export default function CreateVaultPage() {
   );
 }
 
+const SEAL_STEPS = [
+  "Compiling the policy",
+  "Deploying the smart account",
+  "Installing the validator",
+  "Arming five gates",
+];
+
 function PolicyPreview({
   armed,
+  sealing,
   ownerOk,
   limitsOk,
   permissionOk,
@@ -351,6 +363,7 @@ function PolicyPreview({
   signature,
 }: {
   armed: boolean;
+  sealing: boolean;
   ownerOk: boolean;
   limitsOk: boolean;
   permissionOk: boolean;
@@ -360,7 +373,16 @@ function PolicyPreview({
   target: string;
   signature: string;
 }) {
-  const progress = (ownerOk ? 0.4 : 0) + (limitsOk ? 0.3 : 0) + (permissionOk ? 0.3 : 0);
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    if (!sealing) {
+      setStep(0);
+      return;
+    }
+    const id = setInterval(() => setStep((n) => Math.min(n + 1, SEAL_STEPS.length - 1)), 1100);
+    return () => clearInterval(id);
+  }, [sealing]);
+  const progress = sealing ? 1 : (ownerOk ? 0.4 : 0) + (limitsOk ? 0.3 : 0) + (permissionOk ? 0.3 : 0);
   const states: GateArm[] = armed ? ["armed", "armed", "armed", "armed", "armed"] : ["off", "off", "off", "off", "off"];
   return (
     <div
@@ -373,7 +395,7 @@ function PolicyPreview({
       <div className="flex items-center justify-between border-b border-void-border px-5 py-3">
         <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-void-dim">Policy perimeter</span>
         <span className={`font-mono text-[11px] ${armed ? "text-void-success" : "text-void-dim"}`}>
-          {Math.round(progress * 100)}% closed
+          {sealing ? "sealing" : `${Math.round(progress * 100)}% closed`}
         </span>
       </div>
       <div className="relative flex flex-col items-center px-5 pb-2 pt-6">
@@ -385,6 +407,16 @@ function PolicyPreview({
           <GateStrip states={states} />
         </div>
       </div>
+      {sealing ? (
+        <div className="flex flex-col gap-2.5 px-5 py-5 font-mono text-xs">
+          {SEAL_STEPS.map((label, i) => (
+            <div key={label} className={`flex items-center gap-2.5 transition ${i <= step ? "text-void-text" : "text-void-dim/50"}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${i < step ? "bg-void-success" : i === step ? "animate-pulse bg-void-cta" : "bg-void-border"}`} />
+              {label}
+            </div>
+          ))}
+        </div>
+      ) : (
       <div className="flex flex-col gap-3 px-5 py-5 font-mono text-xs">
         <PreviewRow k="Spend cap" v={`${Number(budgetEth) > 0 ? budgetEth : "0"} ETH`} />
         <PreviewRow k="Transactions" v={`${maxTx || 0} max`} />
@@ -392,6 +424,7 @@ function PolicyPreview({
         <PreviewRow k="Pre-approved" v={target ? `${truncateAddress(target)}` : "none"} />
         {signature && target && <PreviewRow k="Function" v={signature} />}
       </div>
+      )}
       <div className="border-t border-void-border px-5 py-3 text-xs leading-relaxed text-void-muted">
         {permissionOk
           ? "Everything outside this is rejected on-chain, in the same fixed order, every time."
@@ -561,7 +594,7 @@ function NextSteps({
       const res = await fund(ethToWei(amount));
       setFunded(res.txHash);
     } catch {
-      setError("Couldn't send that. Check the amount and try again.");
+      setError("Funding failed. Check the amount and the relayer balance.");
     } finally {
       setBusy(false);
     }

@@ -14,6 +14,7 @@ import {
   BudgetBar,
   AddressLink,
   CopyableAddress,
+  CopyButton,
   TxLink,
   BackLink,
   SecondaryButton,
@@ -21,6 +22,8 @@ import {
 import { RevokePanel } from "@/components/RevokePanel";
 import { SweepPanel } from "@/components/SweepPanel";
 import { AgentConsole } from "@/components/AgentConsole";
+import { PerimeterRing } from "@/components/PerimeterRing";
+import { GateStrip, type GateArm } from "@/components/GateStrip";
 
 export default function VaultDetailPage() {
   const { address } = useParams<{ address: string }>();
@@ -46,13 +49,13 @@ export default function VaultDetailPage() {
   }
 
   if (statusQuery.isLoading) {
-    return <div className="text-sm text-void-dim">Loading vault…</div>;
+    return <div className="font-mono text-sm text-void-dim">Reading the chain…</div>;
   }
 
   if (statusQuery.isError || !statusQuery.data) {
     return (
       <div className="rounded-sm border border-void-danger/30 bg-void-dangerDim/10 px-4 py-3 text-sm text-void-danger">
-        Couldn&apos;t load this vault. Wrong address, or the API can&apos;t reach the chain.
+        No vault found at this address on {network.name}. Check the address, and check you are on the right network.
       </div>
     );
   }
@@ -64,64 +67,130 @@ export default function VaultDetailPage() {
   const txPct = pctOf(s.txCount, s.maxTxCount);
 
   const tone = s.revoked ? "revoked" : s.expired ? "expired" : "active";
+  const ended = s.revoked || s.expired;
+  const total = Math.max(1, s.validUntil - s.validAfter);
+  const sessionLeft = ended ? 0 : Math.max(0.03, Math.min(1, remaining / total));
+  const gates: GateArm[] = ended ? ["closed", "off", "off", "off", "off"] : ["armed", "armed", "armed", "armed", "armed"];
+
+  const theme = s.revoked
+    ? {
+        frame: "border-void-danger/35 shadow-[0_0_100px_-30px_rgba(240,71,92,0.6)]",
+        glow: "rgba(240,71,92,0.28)",
+        word: "revoked.",
+        wordClass: "text-void-danger",
+        lead: "Session",
+        sub: "Gate 1 now rejects every action this key tries. The agent is locked out, and the funds were never in its hands.",
+      }
+    : s.expired
+      ? {
+          frame: "border-void-borderStrong shadow-none",
+          glow: "rgba(107,107,118,0.18)",
+          word: "ended.",
+          wordClass: "text-void-muted",
+          lead: "Session",
+          sub: "Gate 1 now rejects every action. Anything left in the vault can be swept back to the owner.",
+        }
+      : {
+          frame: "border-void-success/35 shadow-[0_0_100px_-30px_rgba(52,211,153,0.6)]",
+          glow: "rgba(52,211,153,0.26)",
+          word: "holding.",
+          wordClass: "text-void-success",
+          lead: "The perimeter is",
+          sub: `${formatDuration(remaining)} left. Anything outside this policy is rejected on-chain, in the same order, every time.`,
+        };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <div>
         <BackLink href="/">Back to vaults</BackLink>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-mono text-xl text-void-text">
-            <CopyableAddress address={s.vaultAddress} chars={6} />
-          </h1>
-          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-void-muted">
-            <span>owner</span>
-            <CopyableAddress address={s.owner} />
-            <span>· session key</span>
-            <CopyableAddress address={s.sessionKeyAddress} />
-          </p>
+      <section className={`relative overflow-hidden rounded-lg border bg-void-surface ${theme.frame}`}>
+        <span
+          className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full blur-3xl"
+          style={{ background: `radial-gradient(closest-side, ${theme.glow}, transparent)` }}
+        />
+        <div className="relative grid items-center gap-8 p-7 sm:p-9 lg:grid-cols-[1fr_auto]">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="font-mono text-[11px] uppercase tracking-[0.28em] text-void-dim">
+                Session vault · {network.name}
+              </span>
+              <Badge tone={tone}>{s.revoked ? "Revoked" : s.expired ? "Expired" : "Active"}</Badge>
+            </div>
+            <h1 className="mt-4 text-4xl font-extrabold leading-[1.02] tracking-[-0.045em] text-void-text sm:text-5xl">
+              {theme.lead}{" "}
+              <span className={`font-serif text-[1.14em] font-normal italic tracking-[-0.02em] ${theme.wordClass}`}>
+                {theme.word}
+              </span>
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-void-muted">{theme.sub}</p>
+            <div className="mt-5 flex flex-col gap-2 text-xs text-void-muted">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="w-20 text-void-dim">vault</span>
+                <span className="break-all font-mono text-void-text">{s.vaultAddress}</span>
+                <CopyButton value={s.vaultAddress} />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="w-20 text-void-dim">owner</span>
+                <CopyableAddress address={s.owner} />
+                <span className="ml-3 text-void-dim">session key</span>
+                <CopyableAddress address={s.sessionKeyAddress} />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <PerimeterRing progress={sessionLeft} size={150} state={ended ? "dead" : "sealed"} duration={1.3} />
+            <span className={`font-mono text-xs ${ended ? "text-void-dim" : "text-void-success"}`}>
+              {ended ? (s.revoked ? "revoked" : "ended") : `${formatDuration(remaining)} left`}
+            </span>
+          </div>
         </div>
-        <Badge tone={tone}>{s.revoked ? "Revoked" : s.expired ? "Expired" : "Active"}</Badge>
-      </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <span className="text-sm font-medium text-void-text">Native budget</span>
-            <span className="font-mono text-xs text-void-muted">
-              {weiToEthDisplay(s.nativeSpent)} / {weiToEthDisplay(s.nativeSpendCap)} ETH
-            </span>
-          </CardHeader>
-          <div className="p-4">
-            <BudgetBar pct={spentPct} tone={tone === "revoked" ? "revoked" : spentPct > 80 ? "warn" : "active"} />
-            <p className="mt-2 text-xs text-void-dim">
-              {weiToEthDisplay(s.remainingNativeBudget)} ETH remaining
+        <div className="relative grid grid-cols-1 divide-y divide-void-border border-t border-void-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <div className="px-7 py-5">
+            <div className="font-mono text-[11px] uppercase tracking-wider text-void-dim">Spent</div>
+            <div className={`mt-1 font-display text-3xl font-bold tracking-tight ${ended ? "text-void-muted" : "text-void-text"}`}>
+              {weiToEthDisplay(s.nativeSpent)}
+              <span className="ml-1.5 font-mono text-xs font-normal text-void-dim">/ {weiToEthDisplay(s.nativeSpendCap)} ETH</span>
+            </div>
+            <div className="mt-3">
+              <BudgetBar pct={spentPct} tone={s.revoked ? "revoked" : spentPct > 80 ? "warn" : "active"} />
+            </div>
+          </div>
+          <div className="px-7 py-5">
+            <div className="font-mono text-[11px] uppercase tracking-wider text-void-dim">Transactions</div>
+            <div className={`mt-1 font-display text-3xl font-bold tracking-tight ${ended ? "text-void-muted" : "text-void-text"}`}>
+              {s.txCount}
+              <span className="ml-1.5 font-mono text-xs font-normal text-void-dim">/ {s.maxTxCount} allowed</span>
+            </div>
+            <div className="mt-3">
+              <BudgetBar pct={txPct} tone={s.revoked ? "revoked" : txPct > 80 ? "warn" : "active"} />
+            </div>
+          </div>
+          <div className="px-7 py-5">
+            <div className="font-mono text-[11px] uppercase tracking-wider text-void-dim">Hard expiry</div>
+            <div className={`mt-1 font-display text-3xl font-bold tracking-tight ${ended ? "text-void-muted" : "text-void-text"}`}>
+              {formatTimestamp(s.validUntil)}
+            </div>
+            <p className="mt-3 font-mono text-xs text-void-dim">
+              {weiToEthDisplay(s.remainingNativeBudget)} ETH of budget unspent
             </p>
           </div>
-        </Card>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <span className="text-sm font-medium text-void-text">Transactions</span>
-            <span className="font-mono text-xs text-void-muted">
-              {s.txCount} / {s.maxTxCount}
-            </span>
-          </CardHeader>
-          <div className="p-4">
-            <BudgetBar pct={txPct} tone={tone === "revoked" ? "revoked" : txPct > 80 ? "warn" : "active"} />
-            <p className="mt-2 text-xs text-void-dim">
-              expires {formatTimestamp(s.validUntil)} ({formatDuration(remaining)} left)
-            </p>
-          </div>
-        </Card>
-      </div>
+        <div className="relative border-t border-void-border px-7 py-5">
+          <GateStrip states={gates} labels />
+        </div>
+      </section>
 
+      <div>
+        <div className="mb-3 font-mono text-[11px] uppercase tracking-[0.28em] text-void-dim">Owner controls</div>
       <div className="flex flex-wrap items-center gap-3">
         <RevokePanel vaultAddress={s.vaultAddress} onRevoked={invalidate} />
         <DepositButton vaultAddress={s.vaultAddress} onDeposited={invalidate} />
         <SweepPanel vaultAddress={s.vaultAddress} onSwept={invalidate} />
+      </div>
       </div>
 
       <Card>

@@ -40,7 +40,10 @@ export default function HomePage() {
     <div className="flex flex-col gap-24 lg:gap-28">
       <section className="grid items-center gap-10 pt-4 lg:grid-cols-[1fr_1.1fr]">
         <div className="flex flex-col gap-6">
-          <h1 className="max-w-3xl text-5xl font-extrabold leading-[1.0] tracking-[-0.045em] text-void-text sm:text-6xl lg:text-[3.7rem]">
+          <span className="font-mono text-[11px] uppercase leading-relaxed tracking-[0.16em] text-void-cta">
+            Session keys for agents that the contract itself enforces.
+          </span>
+          <h1 className="-mt-2 max-w-3xl text-5xl font-extrabold leading-[1.0] tracking-[-0.045em] text-void-text sm:text-6xl lg:text-[3.7rem]">
             An agent can propose anything. The contract decides{" "}
             <span className="font-serif text-[1.14em] font-normal italic tracking-[-0.02em] text-void-cta">
               what&apos;s real.
@@ -133,11 +136,11 @@ export default function HomePage() {
           <span className="text-xs text-void-dim">Any vault opens by address. The chain is the source of truth.</span>
         </div>
 
-        {vaultsQuery.isLoading && <div className="text-sm text-void-dim">Loading…</div>}
+        {vaultsQuery.isLoading && <div className="font-mono text-sm text-void-dim">Reading the chain…</div>}
 
         {vaultsQuery.isError && (
           <div className="rounded-sm border border-void-danger/30 bg-void-dangerDim/10 px-4 py-3 text-sm text-void-danger">
-            Couldn&apos;t reach the {network.name} API ({network.apiUrl}).
+            No response from the {network.name} API ({network.apiUrl}).
           </div>
         )}
 
