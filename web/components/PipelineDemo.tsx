@@ -47,10 +47,10 @@ export function PipelineDemo() {
         </button>
       </div>
 
-      <div className="rounded-lg border border-void-border bg-void-surface p-8">
-        <PolicyPipeline statuses={statuses} />
+      <div className="rounded-lg border border-void-border bg-void-surface p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_24px_60px_-30px_rgba(108,99,255,0.35)]">
+        <PolicyPipeline key={`pipe-${scenario}`} statuses={statuses} />
 
-        <div className="mt-8 flex items-start gap-3 border-t border-void-border pt-7">
+        <div key={`result-${scenario}`} className="mt-8 flex animate-arm items-start gap-3 border-t border-void-border pt-7 [animation-delay:0.45s]">
           <span
             className={`mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full ${ok ? "bg-void-success" : "bg-void-danger"}`}
           />

@@ -113,7 +113,7 @@ export function AgentConsole({
       </div>
 
       <div className="rounded-lg border border-void-border bg-void-bg px-5 py-6">
-        <PolicyPipeline statuses={pipelineStatuses} />
+        <PolicyPipeline key={latest?.id ?? "idle"} statuses={pipelineStatuses} />
       </div>
 
       <div>

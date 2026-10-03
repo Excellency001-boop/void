@@ -37,10 +37,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex flex-col gap-20">
-      <section className="grid items-center gap-10 pt-4 lg:grid-cols-[1.05fr_1fr]">
+    <div className="flex flex-col gap-24 lg:gap-28">
+      <section className="grid items-center gap-10 pt-4 lg:grid-cols-[1.12fr_1fr]">
         <div className="flex flex-col gap-6">
-          <h1 className="max-w-3xl text-5xl font-bold leading-[1.08] tracking-tight text-void-text lg:text-[3.4rem]">
+          <h1 className="max-w-3xl text-5xl font-bold leading-[1.02] tracking-[-0.04em] text-void-text sm:text-6xl lg:text-[4rem]">
             An agent can propose anything. The contract decides what&apos;s real.
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-void-muted">
@@ -60,23 +60,26 @@ export default function HomePage() {
             </a>
           </div>
         </div>
-        <HeroDiagram />
+        <div className="relative">
+          <div className="pointer-events-none absolute -inset-10 -z-10 rounded-full bg-[radial-gradient(closest-side,rgba(108,99,255,0.28),rgba(255,107,44,0.08)_60%,transparent)] blur-2xl" />
+          <HeroDiagram />
+        </div>
       </section>
 
       <section className="grid grid-cols-1 divide-y divide-void-border overflow-hidden rounded-lg border border-void-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        <div className="p-6">
+        <div className="p-7">
           <div className="font-mono text-3xl font-medium text-void-text">5</div>
           <div className="mt-1.5 text-sm text-void-muted">
             priority-ordered checks enforced on-chain, not in app code
           </div>
         </div>
-        <div className="p-6">
+        <div className="p-7">
           <div className="font-mono text-3xl font-medium text-void-text">2</div>
           <div className="mt-1.5 text-sm text-void-muted">
             live testnets: Base Sepolia and Arbitrum Sepolia
           </div>
         </div>
-        <div className="p-6">
+        <div className="p-7">
           <div className="font-mono text-3xl font-medium text-void-text">28</div>
           <div className="mt-1.5 text-sm text-void-muted">
             Foundry tests, including the negative-case proofs

@@ -56,6 +56,22 @@ export function HeroDiagram() {
         </g>
       ))}
 
+      <g className="hero-motion">
+        {GATE_X.map((x) => {
+          const t = ((x - 76) / 274) * 0.55;
+          const kt = `0;${(t - 0.01).toFixed(3)};${t.toFixed(3)};${(t + 0.07).toFixed(3)};1`;
+          return (
+            <line key={x} x1={x} y1="174" x2={x} y2="206" stroke="#c9ffe9" strokeWidth="2.5" strokeLinecap="round" opacity="0">
+              <animate attributeName="opacity" values="0;0;1;0;0" keyTimes={kt} dur="4.5s" repeatCount="indefinite" />
+            </line>
+          );
+        })}
+        <circle cx="311" cy="91" r="9" fill="none" stroke={RED} strokeWidth="1.5" opacity="0">
+          <animate attributeName="r" values="9;9;9;26;26" keyTimes="0;0.55;0.58;0.8;1" dur="4.5s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0;0;0.9;0;0" keyTimes="0;0.55;0.58;0.8;1" dur="4.5s" repeatCount="indefinite" />
+        </circle>
+      </g>
+
       <path
         d="M78 184C120 120 200 84 303 90"
         fill="none"

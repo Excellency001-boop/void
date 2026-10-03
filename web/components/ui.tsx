@@ -8,7 +8,7 @@ import { truncateAddress } from "@/lib/format";
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-sm border border-void-border bg-void-surface ${className}`}>{children}</div>
+    <div className={`rounded-sm border border-void-border bg-void-surface shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_24px_-14px_rgba(0,0,0,0.8)] ${className}`}>{children}</div>
   );
 }
 
@@ -97,7 +97,7 @@ export function TxLink({ hash, label = "tx" }: { hash: string; label?: string })
 type BadgeTone = "active" | "revoked" | "expired" | "warn" | "neutral";
 
 const toneClasses: Record<BadgeTone, string> = {
-  active: "border-void-success/40 bg-void-successDim/30 text-void-success",
+  active: "border-void-success/70 bg-void-successDim/70 text-void-success shadow-[0_0_16px_-4px_rgba(52,211,153,0.7)]",
   revoked: "border-void-danger/40 bg-void-dangerDim/30 text-void-danger",
   expired: "border-void-dim/40 bg-void-raised text-void-dim",
   warn: "border-void-warn/40 bg-void-warnDim/30 text-void-warn",
@@ -134,7 +134,7 @@ export function PrimaryButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`rounded-sm bg-void-cta px-4 py-2 text-sm font-semibold text-void-bg shadow-[0_0_0_1px_rgba(255,107,44,0.35),0_10px_28px_-10px_rgba(255,107,44,0.55)] transition hover:bg-void-ctaHover disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none ${className}`}
+      className={`rounded-sm bg-void-cta px-4 py-2 text-sm font-semibold text-void-bg shadow-[0_0_0_1px_rgba(255,107,44,0.35),0_10px_28px_-10px_rgba(255,107,44,0.55)] transition duration-150 hover:-translate-y-px hover:bg-void-ctaHover hover:shadow-[0_0_0_1px_rgba(255,130,71,0.6),0_14px_34px_-10px_rgba(255,107,44,0.75)] active:translate-y-0 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none ${className}`}
       {...props}
     >
       {children}
@@ -149,7 +149,7 @@ export function DangerButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`rounded-sm border border-void-danger/50 bg-void-dangerDim/20 px-4 py-2 text-sm font-medium text-void-danger transition hover:bg-void-dangerDim/40 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`rounded-sm border border-void-danger/50 bg-void-dangerDim/20 px-4 py-2 text-sm font-medium text-void-danger transition duration-150 hover:bg-void-dangerDim/40 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}
@@ -164,7 +164,7 @@ export function SecondaryButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`rounded-sm border border-void-border bg-void-raised px-4 py-2 text-sm font-medium text-void-text transition hover:border-void-borderStrong disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`rounded-sm border border-void-border bg-void-raised px-4 py-2 text-sm font-medium text-void-text transition duration-150 hover:-translate-y-px hover:border-void-borderStrong active:translate-y-0 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
       {...props}
     >
       {children}

@@ -27,6 +27,7 @@ export default {
         },
       },
       fontFamily: {
+        display: ["var(--font-display)", "var(--font-sans)", "sans-serif"],
         mono: [
           "var(--font-mono)",
           "ui-monospace",
@@ -57,12 +58,18 @@ export default {
           "100%": { opacity: "1", transform: "none" },
         },
         "spin-slow": { to: { transform: "rotate(360deg)" } },
+        burst: {
+          "0%": { transform: "translate(-50%, -50%) scale(0.4) rotate(0deg)", opacity: "0" },
+          "15%": { opacity: "1" },
+          "100%": { transform: "translate(calc(-50% + var(--bx)), calc(-50% + var(--by))) scale(1) rotate(260deg)", opacity: "0" },
+        },
       },
       animation: {
         "seal-ring": "seal-ring 1.8s ease-out 2",
         draw: "draw 0.6s ease-out 0.4s both",
         arm: "arm 0.5s ease-out both",
         "spin-slow": "spin-slow 28s linear infinite",
+        burst: "burst 1.3s cubic-bezier(0.2, 0.8, 0.3, 1) both",
       },
       borderRadius: {
         sm: "8px",

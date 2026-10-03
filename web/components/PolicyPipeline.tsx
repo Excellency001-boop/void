@@ -29,10 +29,10 @@ export function PolicyPipeline({ statuses }: { statuses: GateStatus[] }) {
   return (
     <div className="flex items-start">
       {POLICY_GATES.map((gate, i) => (
-        <div key={gate.key} className="flex flex-1 items-start">
+        <div key={gate.key} className="flex flex-1 items-start animate-arm" style={{ animationDelay: `${i * 90}ms` }}>
           <div className="flex flex-1 flex-col items-center gap-2 text-center">
             <div
-              className={`flex h-7 w-7 items-center justify-center rounded-full border font-mono text-xs ${BORDER[statuses[i]]} ${TEXT[statuses[i]]}`}
+              className={`flex h-7 w-7 items-center justify-center rounded-full border font-mono text-xs transition-colors duration-300 ${BORDER[statuses[i]]} ${TEXT[statuses[i]]}`}
             >
               {i + 1}
             </div>
