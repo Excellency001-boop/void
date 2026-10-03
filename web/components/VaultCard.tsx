@@ -6,6 +6,7 @@ import type { VaultRecord } from "@/lib/api";
 import { useNetwork } from "@/lib/network-context";
 import { formatDuration, pctOf, truncateAddress, weiToEthDisplay } from "@/lib/format";
 import { Badge, BudgetBar } from "@/components/ui";
+import { GateStrip, type GateArm } from "@/components/GateStrip";
 
 export function VaultCard({ vault }: { vault: VaultRecord }) {
   const { network, api } = useNetwork();
@@ -30,18 +31,28 @@ export function VaultCard({ vault }: { vault: VaultRecord }) {
   const cap = s?.nativeSpendCap ?? vault.policy.nativeSpendCap;
   const spent = s?.nativeSpent ?? "0";
   const spentPct = pctOf(spent, cap);
+  const gates: GateArm[] = ended ? ["closed", "off", "off", "off", "off"] : ["armed", "armed", "armed", "armed", "armed"];
 
   return (
     <Link
       href={`/vaults/${vault.vaultAddress}`}
-      className="group flex h-full flex-col rounded-sm border border-void-border bg-void-surface transition hover:border-void-borderStrong"
+      className={`group flex h-full flex-col rounded-sm border transition duration-200 ${
+        ended
+          ? "border-void-border bg-void-surface hover:border-void-borderStrong"
+          : "border-void-success/25 bg-gradient-to-b from-void-successDim/25 to-void-surface shadow-[0_14px_44px_-20px_rgba(52,211,153,0.45)] hover:-translate-y-0.5 hover:border-void-success/50"
+      }`}
     >
       <div className="flex items-center justify-between px-4 pt-4">
         <span className={`font-mono text-sm ${ended ? "text-void-muted" : "text-void-text"}`}>
           {truncateAddress(vault.vaultAddress, 5)}
         </span>
         <Badge tone={tone}>
-          {tone === "active" && <span className="h-1.5 w-1.5 rounded-full bg-void-success" />}
+          {tone === "active" && (
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-void-success opacity-70" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-void-success" />
+            </span>
+          )}
           {label}
         </Badge>
       </div>
@@ -54,7 +65,10 @@ export function VaultCard({ vault }: { vault: VaultRecord }) {
           </span>
           <span className="text-xs text-void-dim">{ended ? "ended" : `${formatDuration(remaining)} left`}</span>
         </div>
-        <div className={`mt-2.5 ${ended && !revoked ? "opacity-40" : ""}`}>
+        <div className="mt-3">
+          <GateStrip states={gates} />
+        </div>
+        <div className={`mt-3 ${ended && !revoked ? "opacity-40" : ""}`}>
           <BudgetBar pct={spentPct} tone={revoked ? "revoked" : spentPct > 80 ? "warn" : "active"} />
         </div>
       </div>

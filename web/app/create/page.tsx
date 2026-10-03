@@ -8,6 +8,8 @@ import { ApiError, type CreateVaultResult } from "@/lib/api";
 import { useNetwork } from "@/lib/network-context";
 import { explorerAddressUrl } from "@/lib/networks";
 import { ethToWei, formatTimestamp, truncateAddress } from "@/lib/format";
+import { GateStrip } from "@/components/GateStrip";
+import { VaultSeal } from "@/components/VaultSeal";
 import { Card, PrimaryButton, SecondaryButton, Label, BackLink, TxLink, CopyButton } from "@/components/ui";
 
 /// A deliberately not-whitelisted address — clicking the post-deploy "simulate a rejection" CTA
@@ -102,21 +104,22 @@ export default function CreateVaultPage() {
           <BackLink href="/">Back to vaults</BackLink>
         </div>
 
-        <div className="flex items-start gap-3.5">
-          <span className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-void-successDim">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-void-success">
-              <path d="M20 6 9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-          <div>
-            <h1 className="text-xl font-semibold text-void-text">Vault deployed</h1>
-            <p className="mt-1 text-sm text-void-muted">
-              Live on {network.name}. The policy below is enforced by the contract, not by this app.
-            </p>
-          </div>
+        <div className="flex flex-col items-center gap-2 text-center">
+          <VaultSeal />
+          <h1 className="text-3xl font-bold tracking-tight text-void-text">Your vault is live.</h1>
+          <p className="max-w-md text-sm text-void-muted">
+            Sealed on {network.name}. From here the contract enforces this policy, not this app.
+          </p>
         </div>
 
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden shadow-[0_0_70px_-24px_rgba(52,211,153,0.4)]">
+          <div className="border-b border-void-border px-5 py-4">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-[11px] uppercase tracking-wider text-void-dim">Policy gates</span>
+              <span className="font-mono text-[11px] text-void-success">5 of 5 armed</span>
+            </div>
+            <GateStrip states={["armed", "armed", "armed", "armed", "armed"]} labels />
+          </div>
           <div className="flex flex-col gap-3 p-5">
             <Field label="Vault address" value={result.vaultAddress} />
           </div>
@@ -161,7 +164,7 @@ export default function CreateVaultPage() {
 
         <div className="flex flex-col gap-3">
           <Link href={simulateHref}>
-            <PrimaryButton className="w-full">Simulate a rejected action →</PrimaryButton>
+            <PrimaryButton className="w-full py-3 text-base">Simulate a rejected action →</PrimaryButton>
           </Link>
           <div className="flex gap-3">
             <a href={explorerUrl} target="_blank" rel="noreferrer" className="flex-1">

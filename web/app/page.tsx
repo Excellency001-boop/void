@@ -9,6 +9,7 @@ import { useNetwork } from "@/lib/network-context";
 import { PrimaryButton, SecondaryButton, Label } from "@/components/ui";
 import { PipelineDemo } from "@/components/PipelineDemo";
 import { VaultCard } from "@/components/VaultCard";
+import { HeroDiagram } from "@/components/HeroDiagram";
 
 export default function HomePage() {
   const router = useRouter();
@@ -37,26 +38,29 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col gap-20">
-      <section className="flex flex-col gap-6 pt-4">
-        <h1 className="max-w-3xl text-5xl font-bold leading-[1.1] tracking-tight text-void-text sm:text-6xl">
-          An agent can propose anything. The contract decides what&apos;s real.
-        </h1>
-        <p className="max-w-xl text-lg leading-relaxed text-void-muted">
-          VOID compiles a spending policy directly into an on-chain ERC-4337 validator. Outside
-          that policy there is no signature the agent&apos;s session key can produce that the
-          contract will accept. Not a review step, a mathematical guarantee.
-        </p>
-        <div className="flex flex-wrap items-center gap-3 pt-2">
-          <Link href="/create">
-            <PrimaryButton className="px-6 py-3 text-base">Create a session vault</PrimaryButton>
-          </Link>
-          <a
-            href="#pipeline"
-            className="inline-flex min-h-[44px] items-center rounded-sm border border-void-border px-6 py-3 text-base font-medium text-void-text transition hover:border-void-borderStrong"
-          >
-            Watch it reject a transaction ↓
-          </a>
+      <section className="grid items-center gap-10 pt-4 lg:grid-cols-[1.05fr_1fr]">
+        <div className="flex flex-col gap-6">
+          <h1 className="max-w-3xl text-5xl font-bold leading-[1.08] tracking-tight text-void-text lg:text-[3.4rem]">
+            An agent can propose anything. The contract decides what&apos;s real.
+          </h1>
+          <p className="max-w-xl text-lg leading-relaxed text-void-muted">
+            VOID compiles a spending policy directly into an on-chain ERC-4337 validator. Outside
+            that policy there is no signature the agent&apos;s session key can produce that the
+            contract will accept. Not a review step, a mathematical guarantee.
+          </p>
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Link href="/create">
+              <PrimaryButton className="px-6 py-3 text-base">Create a session vault</PrimaryButton>
+            </Link>
+            <a
+              href="#pipeline"
+              className="inline-flex min-h-[44px] items-center rounded-sm border border-void-borderStrong px-6 py-3 text-base font-medium text-void-text transition hover:border-void-muted"
+            >
+              Watch it reject a transaction ↓
+            </a>
+          </div>
         </div>
+        <HeroDiagram />
       </section>
 
       <section className="grid grid-cols-1 divide-y divide-void-border overflow-hidden rounded-lg border border-void-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
@@ -132,39 +136,37 @@ export default function HomePage() {
         )}
 
         {vaultsQuery.data && vaultsQuery.data.length === 0 && (
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-void-border px-6 py-14 text-center">
-            <svg
-              width="40"
-              height="40"
-              viewBox="0 0 40 40"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-void-dim"
-            >
-              <path d="M20 4 34 10v9c0 9-6 14-14 17-8-3-14-8-14-17v-9Z" />
-              <rect x="15" y="18" width="10" height="8" rx="1.5" />
-              <path d="M17.5 18v-3a2.5 2.5 0 0 1 5 0v3" />
-            </svg>
-            <p className="text-sm text-void-muted">
-              Your vaults will show up here. Create one above to get started.
-            </p>
-            <a
-              href="#pipeline"
-              className="text-xs text-void-accent underline decoration-void-accentDim underline-offset-2 hover:decoration-void-accent"
-            >
-              Or see it reject a transaction first ↑
-            </a>
+          <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-void-borderStrong bg-void-surface/60 px-6 py-14 text-center">
+            <div className="relative flex h-24 w-24 items-center justify-center">
+              <svg viewBox="0 0 96 96" className="absolute inset-0 animate-spin-slow text-void-accent/50" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="2 7" strokeLinecap="round">
+                <circle cx="48" cy="48" r="44" />
+              </svg>
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-void-muted">
+                <path d="M20 4 34 10v9c0 9-6 14-14 17-8-3-14-8-14-17v-9Z" />
+                <rect x="15" y="18" width="10" height="8" rx="1.5" />
+                <path d="M17.5 18v-3a2.5 2.5 0 0 1 5 0v3" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-base font-medium text-void-text">No vaults on {network.name} yet</p>
+              <p className="mt-1 text-sm text-void-muted">Set a policy, hand the key to an agent, watch the contract hold the line.</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link href="/create">
+                <PrimaryButton>Create your first vault</PrimaryButton>
+              </Link>
+              <a href="#pipeline" className="text-sm text-void-accent underline decoration-void-accentDim underline-offset-2 hover:decoration-void-accent">
+                See a rejection first ↑
+              </a>
+            </div>
           </div>
         )}
 
         {allEnded && (
           <div className="flex items-center justify-between rounded-sm border border-void-border bg-void-surface px-4 py-3 text-sm text-void-muted">
             <span>All of these sessions have ended. Start a new one to keep an agent running.</span>
-            <Link href="/create" className="text-void-accent underline decoration-void-accentDim underline-offset-2 hover:decoration-void-accent">
-              New vault
+            <Link href="/create">
+              <PrimaryButton className="py-1.5">New vault</PrimaryButton>
             </Link>
           </div>
         )}

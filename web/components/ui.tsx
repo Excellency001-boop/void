@@ -134,7 +134,7 @@ export function PrimaryButton({
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`rounded-sm bg-void-accent px-4 py-2 text-sm font-medium text-void-bg transition hover:bg-void-accent/90 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`rounded-sm bg-void-cta px-4 py-2 text-sm font-semibold text-void-bg shadow-[0_0_0_1px_rgba(255,107,44,0.35),0_10px_28px_-10px_rgba(255,107,44,0.55)] transition hover:bg-void-ctaHover disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none ${className}`}
       {...props}
     >
       {children}
