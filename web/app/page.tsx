@@ -6,9 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { isAddress } from "viem";
 import { useNetwork } from "@/lib/network-context";
-import { truncateAddress, weiToEthDisplay, formatDuration } from "@/lib/format";
-import { Card, PrimaryButton, SecondaryButton, Label } from "@/components/ui";
+import { PrimaryButton, SecondaryButton, Label } from "@/components/ui";
 import { PipelineDemo } from "@/components/PipelineDemo";
+import { VaultCard } from "@/components/VaultCard";
 
 export default function HomePage() {
   const router = useRouter();
@@ -20,6 +20,15 @@ export default function HomePage() {
     queryFn: api.listVaults,
     refetchInterval: 15_000,
   });
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  const sortedVaults = [...(vaultsQuery.data ?? [])].sort((a, b) => {
+    const aLive = a.policy.validUntil > nowSec ? 1 : 0;
+    const bLive = b.policy.validUntil > nowSec ? 1 : 0;
+    if (aLive !== bLive) return bLive - aLive;
+    return b.createdAt.localeCompare(a.createdAt);
+  });
+  const allEnded = sortedVaults.length > 0 && sortedVaults.every((v) => v.policy.validUntil <= nowSec);
 
   function goToVault(e: React.FormEvent) {
     e.preventDefault();
@@ -109,12 +118,10 @@ export default function HomePage() {
           </form>
         </div>
 
-        <Label className="mt-8 border-t border-void-border pt-8">Created this session</Label>
-        <p className="mb-4 mt-1 text-xs text-void-dim">
-          This list is a convenience index kept in the API's memory, not the source of truth —
-          it resets when the API restarts. Every vault's real status always lives on-chain; paste
-          its address above to look it up directly.
-        </p>
+        <div className="mt-8 flex items-baseline justify-between border-t border-void-border pt-8">
+          <Label>Recent on {network.name}</Label>
+          <span className="text-xs text-void-dim">Any vault opens by address. The chain is the source of truth.</span>
+        </div>
 
         {vaultsQuery.isLoading && <div className="text-sm text-void-dim">Loading…</div>}
 
@@ -153,32 +160,19 @@ export default function HomePage() {
           </div>
         )}
 
+        {allEnded && (
+          <div className="flex items-center justify-between rounded-sm border border-void-border bg-void-surface px-4 py-3 text-sm text-void-muted">
+            <span>All of these sessions have ended. Start a new one to keep an agent running.</span>
+            <Link href="/create" className="text-void-accent underline decoration-void-accentDim underline-offset-2 hover:decoration-void-accent">
+              New vault
+            </Link>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {vaultsQuery.data?.map((v) => {
-            const remaining = Number(v.policy.validUntil) - Math.floor(Date.now() / 1000);
-            return (
-              <Link key={v.vaultAddress} href={`/vaults/${v.vaultAddress}`}>
-                <Card className="h-full p-4 transition hover:border-void-borderStrong">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-sm text-void-text">
-                      {truncateAddress(v.vaultAddress)}
-                    </span>
-                    <span className="text-[11px] text-void-dim">{formatDuration(remaining)} left</span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-xs">
-                    <span className="text-void-muted">Budget</span>
-                    <span className="font-mono text-void-text">
-                      {weiToEthDisplay(v.policy.nativeSpendCap)} ETH
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-xs">
-                    <span className="text-void-muted">Owner</span>
-                    <span className="font-mono text-void-dim">{truncateAddress(v.ownerAddress)}</span>
-                  </div>
-                </Card>
-              </Link>
-            );
-          })}
+          {sortedVaults.map((v) => (
+            <VaultCard key={v.vaultAddress} vault={v} />
+          ))}
         </div>
       </section>
     </div>

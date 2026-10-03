@@ -7,7 +7,7 @@ import { isAddress, toFunctionSelector, type Hex } from "viem";
 import { ApiError, type CreateVaultResult } from "@/lib/api";
 import { useNetwork } from "@/lib/network-context";
 import { explorerAddressUrl } from "@/lib/networks";
-import { ethToWei } from "@/lib/format";
+import { ethToWei, formatTimestamp, truncateAddress } from "@/lib/format";
 import { Card, PrimaryButton, SecondaryButton, Label, BackLink, TxLink, CopyButton } from "@/components/ui";
 
 /// A deliberately not-whitelisted address — clicking the post-deploy "simulate a rejection" CTA
@@ -36,7 +36,7 @@ export default function CreateVaultPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CreateVaultResult | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [deployedAt, setDeployedAt] = useState(0);
 
   const ownerValue = owner || address || "";
   const ownerValid = isAddress(ownerValue);
@@ -69,6 +69,7 @@ export default function CreateVaultPage() {
         initialTarget: targetProvided ? (allowedTarget as `0x${string}`) : undefined,
         initialSelector: targetProvided ? selectorPreview ?? undefined : undefined,
       });
+      setDeployedAt(Math.floor(Date.now() / 1000));
       setResult(res);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong deploying the vault.");
@@ -79,6 +80,21 @@ export default function CreateVaultPage() {
 
   if (result) {
     const simulateHref = `/vaults/${result.vaultAddress}?sessionKey=${result.sessionPrivateKey}&target=${UNAUTHORIZED_DEMO_TARGET}#console`;
+    const durationLabel = DURATIONS.find((d) => d.seconds === duration)?.label ?? `${duration}s`;
+    const expiresAt = deployedAt + duration;
+    const explorerUrl = explorerAddressUrl(network, result.vaultAddress);
+    const instructions = buildAgentInstructions({
+      networkName: network.name,
+      chainId: network.chainId,
+      apiUrl: network.apiUrl,
+      vaultAddress: result.vaultAddress,
+      sessionKey: result.sessionPrivateKey,
+      budgetEth,
+      maxTx,
+      expiresAt,
+      allowedTarget: targetProvided ? allowedTarget : undefined,
+      allowedSignature: targetProvided ? allowedSignature.trim() : undefined,
+    });
 
     return (
       <div className="mx-auto flex max-w-xl flex-col gap-6">
@@ -93,55 +109,54 @@ export default function CreateVaultPage() {
             </svg>
           </span>
           <div>
-            <h1 className="text-xl font-semibold text-void-text">Session vault deployed</h1>
+            <h1 className="text-xl font-semibold text-void-text">Vault deployed</h1>
             <p className="mt-1 text-sm text-void-muted">
-              Live on-chain now. The policy you just set is enforced by the contract, not by any
-              app — including this one.
+              Live on {network.name}. The policy below is enforced by the contract, not by this app.
             </p>
           </div>
         </div>
 
-        <Card className="flex flex-col gap-4 p-5">
-          <Field label="Vault address" value={result.vaultAddress} />
-          <div className="text-xs">
-            <a
-              href={explorerAddressUrl(network, result.vaultAddress)}
-              target="_blank"
-              rel="noreferrer"
-              className="text-void-accent underline decoration-void-accentDim underline-offset-2 hover:decoration-void-accent"
-            >
-              View on {network.name} explorer ↗
-            </a>
-            <span className="mx-2 text-void-dim">·</span>
-            <TxLink hash={result.deployTxHash} label="deployment tx" />
+        <Card className="overflow-hidden">
+          <div className="flex flex-col gap-3 p-5">
+            <Field label="Vault address" value={result.vaultAddress} />
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-void-border border-t border-void-border">
+            <SummaryStat label="Spend cap" value={`${budgetEth} ETH`} />
+            <SummaryStat label="Max transactions" value={String(maxTx)} />
+            <SummaryStat label="Expires in" value={durationLabel} sub={formatTimestamp(expiresAt)} />
+          </div>
+          <div className="border-t border-void-border px-5 py-3 text-xs text-void-muted">
+            {targetProvided ? (
+              <>
+                Pre-approved: <span className="font-mono text-void-text">{truncateAddress(allowedTarget)}</span>{" "}
+                <span className="font-mono text-void-dim">{allowedSignature.trim()}</span>
+              </>
+            ) : (
+              "No pre-approved calls. Everything the agent tries will be rejected until you add one."
+            )}
           </div>
         </Card>
 
         <Card className="flex flex-col gap-3 border-void-warn/25 bg-void-warnDim/10 p-5">
           <div>
-            <Label>Session private key — shown once, never stored</Label>
+            <Label>Session key (shown once, never stored)</Label>
             <p className="mt-1.5 text-xs leading-relaxed text-void-muted">
-              Give this to your agent. It signs with this key, but can never produce a valid
-              signature for anything outside the policy above — the contract rejects it, not your
-              code. Copy it now; if it's lost, force-revoke still works and your funds are
-              untouched either way.
+              Hand this to your agent. It can sign for this vault, but never outside the policy. Lose it
+              and the session simply stops working. You can still revoke, and your funds stay yours.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <code className="flex-1 truncate rounded-sm border border-void-warn/30 bg-void-raised px-3 py-2 font-mono text-xs text-void-text">
               {result.sessionPrivateKey}
             </code>
-            <SecondaryButton
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(result.sessionPrivateKey);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 1500);
-              }}
-            >
-              {copied ? "Copied" : "Copy"}
-            </SecondaryButton>
+            <CopyTextButton text={result.sessionPrivateKey} label="Copy" copiedLabel="Copied" />
           </div>
+          <CopyTextButton
+            text={instructions}
+            label="Copy agent instructions"
+            copiedLabel="Instructions copied"
+            className="w-full"
+          />
         </Card>
 
         <div className="flex flex-col gap-3">
@@ -149,11 +164,20 @@ export default function CreateVaultPage() {
             <PrimaryButton className="w-full">Simulate a rejected action →</PrimaryButton>
           </Link>
           <div className="flex gap-3">
+            <a href={explorerUrl} target="_blank" rel="noreferrer" className="flex-1">
+              <SecondaryButton type="button" className="w-full">
+                View on explorer ↗
+              </SecondaryButton>
+            </a>
             <Link href={`/vaults/${result.vaultAddress}`} className="flex-1">
               <SecondaryButton type="button" className="w-full">
-                View vault
+                Open vault
               </SecondaryButton>
             </Link>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-xs text-void-dim">
+            <TxLink hash={result.deployTxHash} label="deployment tx" />
+            <span>·</span>
             <ShareLinkButton vaultAddress={result.vaultAddress} />
           </div>
         </div>
@@ -293,12 +317,39 @@ export default function CreateVaultPage() {
   );
 }
 
-function ShareLinkButton({ vaultAddress }: { vaultAddress: string }) {
+function CopyTextButton({
+  text,
+  label,
+  copiedLabel,
+  className = "",
+}: {
+  text: string;
+  label: string;
+  copiedLabel: string;
+  className?: string;
+}) {
   const [copied, setCopied] = useState(false);
   return (
     <SecondaryButton
       type="button"
-      className="flex-1"
+      className={className}
+      onClick={() => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+    >
+      {copied ? copiedLabel : label}
+    </SecondaryButton>
+  );
+}
+
+function ShareLinkButton({ vaultAddress }: { vaultAddress: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="text-void-muted underline decoration-void-border underline-offset-2 hover:text-void-text"
       onClick={() => {
         navigator.clipboard.writeText(`${window.location.origin}/vaults/${vaultAddress}`);
         setCopied(true);
@@ -306,8 +357,55 @@ function ShareLinkButton({ vaultAddress }: { vaultAddress: string }) {
       }}
     >
       {copied ? "Link copied" : "Copy share link"}
-    </SecondaryButton>
+    </button>
   );
+}
+
+function SummaryStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="px-5 py-4">
+      <div className="text-[11px] uppercase tracking-wider text-void-dim">{label}</div>
+      <div className="mt-1 font-mono text-sm text-void-text">{value}</div>
+      {sub && <div className="mt-0.5 text-[11px] text-void-dim">{sub}</div>}
+    </div>
+  );
+}
+
+function buildAgentInstructions(p: {
+  networkName: string;
+  chainId: number;
+  apiUrl: string;
+  vaultAddress: string;
+  sessionKey: string;
+  budgetEth: string;
+  maxTx: number;
+  expiresAt: number;
+  allowedTarget?: string;
+  allowedSignature?: string;
+}): string {
+  const body = JSON.stringify({
+    vaultAddress: p.vaultAddress,
+    sessionPrivateKey: p.sessionKey,
+    target: p.allowedTarget ?? "0x...",
+    value: "0",
+    calldata: "0x",
+  });
+  return [
+    `VOID session vault on ${p.networkName} (chain ${p.chainId})`,
+    ``,
+    `Vault:        ${p.vaultAddress}`,
+    `Session key:  ${p.sessionKey}  (secret, never share it)`,
+    `API:          ${p.apiUrl}`,
+    `Policy:       ${p.budgetEth} ETH cap, ${p.maxTx} tx max, expires ${new Date(p.expiresAt * 1000).toISOString()}`,
+    `Pre-approved: ${p.allowedTarget ? `${p.allowedTarget} ${p.allowedSignature ?? ""}`.trim() : "none"}`,
+    ``,
+    `Dry run (read only, replays the contract's own validation):`,
+    `curl -X POST ${p.apiUrl}/agent/simulate -H 'Content-Type: application/json' -d '${body}'`,
+    ``,
+    `Execute for real: same body, POST ${p.apiUrl}/agent/execute`,
+    ``,
+    `Anything outside the policy is rejected on-chain by PolicyValidator.`,
+  ].join("\n");
 }
 
 function Field({ label, value }: { label: string; value: string }) {
