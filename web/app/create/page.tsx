@@ -1,22 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useAccount } from "wagmi";
 import { isAddress, toFunctionSelector, type Hex } from "viem";
-import { ApiError, type CreateVaultResult } from "@/lib/api";
+import { ApiError, type ApiClient } from "@/lib/api";
 import { useNetwork } from "@/lib/network-context";
-import { explorerAddressUrl } from "@/lib/networks";
-import { ethToWei, formatTimestamp, truncateAddress } from "@/lib/format";
+import type { NetworkConfig } from "@/lib/networks";
+import { ethToWei, truncateAddress } from "@/lib/format";
 import { GateStrip, type GateArm } from "@/components/GateStrip";
 import { PerimeterRing } from "@/components/PerimeterRing";
-import { VaultSeal } from "@/components/VaultSeal";
-import { Card, PrimaryButton, SecondaryButton, Label, BackLink, TxLink, CopyButton } from "@/components/ui";
-
-/// A deliberately not-whitelisted address — clicking the post-deploy "simulate a rejection" CTA
-/// pre-fills this as the target so the very first click produces a real on-chain rejection, not an
-/// empty form the user has to figure out what to type into.
-const UNAUTHORIZED_DEMO_TARGET = "0x00000000000000000000000000000000deadbeef";
+import { SealedScreen, type SealedPolicy } from "@/components/SealedScreen";
+import { Card, PrimaryButton, SecondaryButton, Label, BackLink } from "@/components/ui";
 
 const DURATIONS = [
   { label: "1 hour", seconds: 3600 },
@@ -38,8 +32,14 @@ export default function CreateVaultPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<CreateVaultResult | null>(null);
-  const [deployedAt, setDeployedAt] = useState(0);
+  const [sealed, setSealed] = useState<{
+    vaultAddress: string;
+    sessionKey: string;
+    deployTxHash: string;
+    network: NetworkConfig;
+    api: ApiClient;
+    policy: SealedPolicy;
+  } | null>(null);
 
   const ownerValue = owner || address || "";
   const ownerValid = isAddress(ownerValue);
@@ -63,8 +63,11 @@ export default function CreateVaultPage() {
     if (!canSubmit) return;
     setSubmitting(true);
     setError(null);
+    // Pin the chain at click time: the header switcher can change while the transaction is pending.
+    const pinnedNetwork = network;
+    const pinnedApi = api;
     try {
-      const res = await api.createVault({
+      const res = await pinnedApi.createVault({
         ownerAddress: ownerValue,
         sessionDurationSeconds: duration,
         nativeSpendCapWei: ethToWei(budgetEth),
@@ -72,8 +75,22 @@ export default function CreateVaultPage() {
         initialTarget: targetProvided ? (allowedTarget as `0x${string}`) : undefined,
         initialSelector: targetProvided ? selectorPreview ?? undefined : undefined,
       });
-      setDeployedAt(Math.floor(Date.now() / 1000));
-      setResult(res);
+      setSealed({
+        vaultAddress: res.vaultAddress,
+        sessionKey: res.sessionPrivateKey,
+        deployTxHash: res.deployTxHash,
+        network: pinnedNetwork,
+        api: pinnedApi,
+        policy: {
+          budgetEth,
+          maxTx,
+          durationSeconds: duration,
+          durationLabel: DURATIONS.find((d) => d.seconds === duration)?.label ?? `${duration}s`,
+          deployedAt: Math.floor(Date.now() / 1000),
+          allowedTarget: targetProvided ? allowedTarget : undefined,
+          allowedSignature: targetProvided ? allowedSignature.trim() : undefined,
+        },
+      });
     } catch (err) {
       setError(err instanceof ApiError ? `Deployment failed. Nothing was sealed. Reason: ${err.message}.` : "Deployment failed. Nothing was sealed. Check the owner address and try again.");
     } finally {
@@ -81,109 +98,16 @@ export default function CreateVaultPage() {
     }
   }
 
-  if (result) {
-    const simulateHref = `/vaults/${result.vaultAddress}?sessionKey=${result.sessionPrivateKey}&target=${UNAUTHORIZED_DEMO_TARGET}#console`;
-    const durationLabel = DURATIONS.find((d) => d.seconds === duration)?.label ?? `${duration}s`;
-    const expiresAt = deployedAt + duration;
-    const explorerUrl = explorerAddressUrl(network, result.vaultAddress);
-    const instructions = buildAgentInstructions({
-      networkName: network.name,
-      chainId: network.chainId,
-      apiUrl: network.apiUrl,
-      vaultAddress: result.vaultAddress,
-      sessionKey: result.sessionPrivateKey,
-      budgetEth,
-      maxTx,
-      expiresAt,
-      allowedTarget: targetProvided ? allowedTarget : undefined,
-      allowedSignature: targetProvided ? allowedSignature.trim() : undefined,
-    });
-
+  if (sealed) {
     return (
-      <div className="mx-auto flex max-w-xl flex-col gap-6">
-        <div className="pointer-events-none fixed inset-0 z-40 animate-flash bg-[radial-gradient(circle_at_50%_24%,rgba(52,211,153,0.4),transparent_58%)] motion-reduce:hidden" />
-        <div>
-          <BackLink href="/">Back to vaults</BackLink>
-        </div>
-
-        <div className="flex flex-col items-center gap-3 text-center">
-          <VaultSeal />
-          <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-void-success">Policy sealed</span>
-          <h1 className="text-5xl font-extrabold leading-none tracking-[-0.045em] text-void-text">
-            Your vault is{" "}
-            <span className="font-serif text-[1.14em] font-normal italic tracking-[-0.02em] text-void-success">live.</span>
-          </h1>
-          <p className="max-w-md text-sm text-void-muted">
-            On {network.name}, from this block on, the contract enforces this policy. Not this app, not the agent.
-          </p>
-        </div>
-
-        <Card className="relative overflow-hidden border-void-success/30 shadow-[0_0_90px_-20px_rgba(52,211,153,0.55)]">
-          <span className="pointer-events-none absolute inset-x-0 z-10 h-px animate-scan bg-[linear-gradient(90deg,transparent,rgba(110,255,200,1),transparent)] shadow-[0_0_18px_4px_rgba(52,211,153,0.5)] motion-reduce:hidden" />
-          <div className="border-b border-void-border px-5 py-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-[11px] uppercase tracking-wider text-void-dim">Policy gates</span>
-              <span className="font-mono text-[11px] text-void-success">5 of 5 armed</span>
-            </div>
-            <GateStrip states={["armed", "armed", "armed", "armed", "armed"]} labels />
-          </div>
-          <div className="p-5">
-            <Label>Vault address</Label>
-            <div className="mt-2 flex items-start gap-3 rounded-sm border border-void-success/30 bg-void-successDim/20 px-4 py-3">
-              <span className="flex-1 break-all font-mono text-[15px] leading-snug text-void-text">{result.vaultAddress}</span>
-              <CopyButton value={result.vaultAddress} className="mt-0.5" />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-void-border border-t border-void-border">
-            <SummaryStat label="Spend cap" value={`${budgetEth} ETH`} />
-            <SummaryStat label="Max transactions" value={String(maxTx)} />
-            <SummaryStat label="Expires in" value={durationLabel} sub={formatTimestamp(expiresAt)} />
-          </div>
-          <div className="border-t border-void-border px-5 py-3 text-xs text-void-muted">
-            {targetProvided ? (
-              <>
-                Pre-approved: <span className="font-mono text-void-text">{truncateAddress(allowedTarget)}</span>{" "}
-                <span className="font-mono text-void-dim">{allowedSignature.trim()}</span>
-              </>
-            ) : (
-              "No pre-approved calls. Everything the agent tries will be rejected until you add one."
-            )}
-          </div>
-        </Card>
-
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-void-cta">Next, three steps</span>
-          <span className="h-px flex-1 bg-gradient-to-r from-void-borderStrong to-transparent" />
-        </div>
-
-        <NextSteps
-          vaultAddress={result.vaultAddress}
-          sessionKey={result.sessionPrivateKey}
-          instructions={instructions}
-          simulateHref={simulateHref}
-          fund={(wei) => api.depositToVault(result.vaultAddress, wei)}
-        />
-
-        <div className="flex flex-col gap-3">
-          <div className="flex gap-3">
-            <a href={explorerUrl} target="_blank" rel="noreferrer" className="flex-1">
-              <SecondaryButton type="button" className="w-full">
-                View on explorer ↗
-              </SecondaryButton>
-            </a>
-            <Link href={`/vaults/${result.vaultAddress}`} className="flex-1">
-              <SecondaryButton type="button" className="w-full">
-                Open vault
-              </SecondaryButton>
-            </Link>
-          </div>
-          <div className="flex items-center justify-center gap-2 text-xs text-void-dim">
-            <TxLink hash={result.deployTxHash} label="deployment tx" />
-            <span>·</span>
-            <ShareLinkButton vaultAddress={result.vaultAddress} />
-          </div>
-        </div>
-      </div>
+      <SealedScreen
+        vaultAddress={sealed.vaultAddress}
+        sessionKey={sealed.sessionKey}
+        deployTxHash={sealed.deployTxHash}
+        network={sealed.network}
+        api={sealed.api}
+        policy={sealed.policy}
+      />
     );
   }
 
@@ -467,211 +391,5 @@ function CopyTextButton({
     >
       {copied ? copiedLabel : label}
     </SecondaryButton>
-  );
-}
-
-function ShareLinkButton({ vaultAddress }: { vaultAddress: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      type="button"
-      className="text-void-muted underline decoration-void-border underline-offset-2 hover:text-void-text"
-      onClick={() => {
-        navigator.clipboard.writeText(`${window.location.origin}/vaults/${vaultAddress}`);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      }}
-    >
-      {copied ? "Link copied" : "Copy share link"}
-    </button>
-  );
-}
-
-function SummaryStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="px-5 py-4">
-      <div className="text-[11px] uppercase tracking-wider text-void-dim">{label}</div>
-      <div className="mt-1 font-mono text-sm text-void-text">{value}</div>
-      {sub && <div className="mt-0.5 text-[11px] text-void-dim">{sub}</div>}
-    </div>
-  );
-}
-
-function buildAgentInstructions(p: {
-  networkName: string;
-  chainId: number;
-  apiUrl: string;
-  vaultAddress: string;
-  sessionKey: string;
-  budgetEth: string;
-  maxTx: number;
-  expiresAt: number;
-  allowedTarget?: string;
-  allowedSignature?: string;
-}): string {
-  const body = JSON.stringify({
-    vaultAddress: p.vaultAddress,
-    sessionPrivateKey: p.sessionKey,
-    target: p.allowedTarget ?? "0x...",
-    value: "0",
-    calldata: "0x",
-  });
-  return [
-    `VOID session vault on ${p.networkName} (chain ${p.chainId})`,
-    ``,
-    `Vault:        ${p.vaultAddress}`,
-    `Session key:  ${p.sessionKey}  (secret, never share it)`,
-    `API:          ${p.apiUrl}`,
-    `Policy:       ${p.budgetEth} ETH cap, ${p.maxTx} tx max, expires ${new Date(p.expiresAt * 1000).toISOString()}`,
-    `Pre-approved: ${p.allowedTarget ? `${p.allowedTarget} ${p.allowedSignature ?? ""}`.trim() : "none"}`,
-    ``,
-    `Dry run (read only, replays the contract's own validation):`,
-    `curl -X POST ${p.apiUrl}/agent/simulate -H 'Content-Type: application/json' -d '${body}'`,
-    ``,
-    `Execute for real: same body, POST ${p.apiUrl}/agent/execute`,
-    ``,
-    `Anything outside the policy is rejected on-chain by PolicyValidator.`,
-  ].join("\n");
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <div className="mt-1 flex items-center gap-2 rounded-sm border border-void-border bg-void-raised px-3 py-2">
-        <span className="flex-1 truncate font-mono text-xs text-void-text">{value}</span>
-        <CopyButton value={value} />
-      </div>
-    </div>
-  );
-}
-
-function StepDot({ n, done, active }: { n: number; done: boolean; active: boolean }) {
-  return (
-    <span
-      className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border font-mono text-xs transition ${
-        done
-          ? "border-void-success bg-void-successDim text-void-success"
-          : active
-            ? "border-void-cta bg-void-cta/15 text-void-cta"
-            : "border-void-borderStrong text-void-dim"
-      }`}
-    >
-      {done ? (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
-      ) : (
-        n
-      )}
-    </span>
-  );
-}
-
-function NextSteps({
-  vaultAddress,
-  sessionKey,
-  instructions,
-  simulateHref,
-  fund,
-}: {
-  vaultAddress: string;
-  sessionKey: string;
-  instructions: string;
-  simulateHref: string;
-  fund: (wei: string) => Promise<{ txHash: string }>;
-}) {
-  const [amount, setAmount] = useState("0.006");
-  const [busy, setBusy] = useState(false);
-  const [funded, setFunded] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [keyCopied, setKeyCopied] = useState(false);
-
-  async function send() {
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fund(ethToWei(amount));
-      setFunded(res.txHash);
-    } catch {
-      setError("Funding failed. Check the amount and the relayer balance.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Card className="divide-y divide-void-border overflow-hidden">
-      <div className="flex gap-4 p-5">
-        <StepDot n={1} done={!!funded} active={!funded} />
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium text-void-text">Fund the vault</div>
-          <p className="mt-1 text-xs leading-relaxed text-void-muted">
-            The agent pays gas from the vault, so give it a little. On mainnet you would send ETH from your own
-            wallet to <span className="font-mono text-void-text">{truncateAddress(vaultAddress)}</span>.
-          </p>
-          {funded ? (
-            <div className="mt-3 flex items-center gap-2 text-xs text-void-success">
-              <span className="font-mono">{amount} ETH in the vault</span>
-              <span className="text-void-dim">·</span>
-              <TxLink hash={funded} label="tx" />
-            </div>
-          ) : (
-            <div className="mt-3 flex items-center gap-2">
-              <input
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                inputMode="decimal"
-                className="w-28 rounded-sm border border-void-border bg-void-raised px-3 py-2 font-mono text-xs text-void-text focus:border-void-accent/70 focus:outline-none focus:ring-2 focus:ring-void-accent/20"
-              />
-              <span className="text-xs text-void-dim">ETH</span>
-              <SecondaryButton type="button" disabled={busy || !(Number(amount) > 0)} onClick={send}>
-                {busy ? "Sending…" : "Send test ETH"}
-              </SecondaryButton>
-            </div>
-          )}
-          {error && <p className="mt-2 text-xs text-void-danger">{error}</p>}
-        </div>
-      </div>
-
-      <div className="flex gap-4 border-void-warn/20 bg-void-warnDim/10 p-5">
-        <StepDot n={2} done={keyCopied} active={!!funded && !keyCopied} />
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium text-void-text">Hand the agent its key</div>
-          <p className="mt-1 text-xs leading-relaxed text-void-muted">
-            Shown once, never stored. It can sign for this vault but never outside the policy. Lose it and the
-            session simply stops. Your funds stay yours.
-          </p>
-          <div className="mt-3 flex items-center gap-2">
-            <code className="min-w-0 flex-1 truncate rounded-sm border border-void-warn/30 bg-void-raised px-3 py-2 font-mono text-xs text-void-text">
-              {sessionKey}
-            </code>
-            <SecondaryButton
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(sessionKey);
-                setKeyCopied(true);
-              }}
-            >
-              {keyCopied ? "Copied" : "Copy"}
-            </SecondaryButton>
-          </div>
-          <CopyTextButton text={instructions} label="Copy agent instructions" copiedLabel="Instructions copied" className="mt-2 w-full" />
-        </div>
-      </div>
-
-      <div className="flex gap-4 p-5">
-        <StepDot n={3} done={false} active={!!funded && keyCopied} />
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium text-void-text">Watch it get rejected</div>
-          <p className="mt-1 text-xs leading-relaxed text-void-muted">
-            Open the console as the agent and try something the policy never allowed. The contract says no, on-chain.
-          </p>
-          <Link href={simulateHref} className="mt-3 block">
-            <PrimaryButton className="w-full py-3 text-base">Simulate a rejected action →</PrimaryButton>
-          </Link>
-        </div>
-      </div>
-    </Card>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { explorerAddressUrl, explorerTxUrl } from "@/lib/networks";
 import { useNetwork } from "@/lib/network-context";
 import { truncateAddress } from "@/lib/format";
+import { copyText } from "@/lib/clipboard";
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -43,10 +44,11 @@ export function CopyButton({ value, className = "" }: { value: string; className
   return (
     <button
       type="button"
-      onClick={() => {
-        navigator.clipboard.writeText(value);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1200);
+      onClick={async () => {
+        if (await copyText(value)) {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1200);
+        }
       }}
       title="Copy to clipboard"
       className={`text-void-dim hover:text-void-text ${className}`}

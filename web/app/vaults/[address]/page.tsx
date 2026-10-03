@@ -1,8 +1,8 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { useNetwork } from "@/lib/network-context";
 import { weiToEthDisplay, formatDuration, formatTimestamp, pctOf, ethToWei } from "@/lib/format";
@@ -22,14 +22,25 @@ import {
 import { RevokePanel } from "@/components/RevokePanel";
 import { SweepPanel } from "@/components/SweepPanel";
 import { AgentConsole } from "@/components/AgentConsole";
+import { takeHandoff, type Handoff } from "@/lib/handoff";
 import { PerimeterRing } from "@/components/PerimeterRing";
 import { GateStrip, type GateArm } from "@/components/GateStrip";
 
 export default function VaultDetailPage() {
   const { address } = useParams<{ address: string }>();
-  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { network, api } = useNetwork();
+
+  // The success screen hands the session key over through sessionStorage, once, instead of a URL.
+  const [handoff, setHandoffState] = useState<Handoff | null>(null);
+  const taken = useRef<{ address: string; value: Handoff | null } | null>(null);
+  useEffect(() => {
+    // takeHandoff deletes the entry, so a second effect run (React strict mode) must reuse the first read.
+    if (!taken.current || taken.current.address !== address) {
+      taken.current = { address, value: takeHandoff(address) };
+    }
+    setHandoffState(taken.current.value);
+  }, [address]);
 
   const statusQuery = useQuery({
     queryKey: ["vault-status", network.id, address],
@@ -223,9 +234,10 @@ export default function VaultDetailPage() {
 
       <div id="console" className="scroll-mt-8">
         <AgentConsole
+          key={handoff ? "handoff" : "manual"}
           vaultAddress={s.vaultAddress}
-          initialSessionKey={searchParams.get("sessionKey") ?? ""}
-          initialTarget={searchParams.get("target") ?? ""}
+          initialSessionKey={handoff?.sessionKey ?? ""}
+          initialTarget={handoff?.target ?? ""}
         />
       </div>
     </div>
