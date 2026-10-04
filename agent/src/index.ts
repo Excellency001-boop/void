@@ -71,6 +71,7 @@ async function main() {
   const log: unknown[] = [];
   let landed = 0;
   let rejected = 0;
+  let failed = 0; // not a policy verdict: gas prefund, not broadcast, malformed request
 
   for (let step = 1; step <= MAX_STEPS; step++) {
     let raw = "";
@@ -115,12 +116,19 @@ async function main() {
         );
         observation = r;
         const ok = action.tool === "execute" ? r.success : r.allowed;
-        if (action.tool === "execute") ok ? landed++ : rejected++;
+        const NOT_POLICY = ["FailedOp", "NotBroadcast", "UnknownRevert"];
+        if (action.tool === "execute") {
+          if (ok) landed++;
+          else if (r.revert && NOT_POLICY.includes(r.revert.errorName)) failed++;
+          else rejected++;
+        }
         const tx = r.txHash && EXPLORER ? `  ${c.dim}${EXPLORER}/tx/${r.txHash}${c.off}` : r.txHash ? `  ${c.dim}tx ${r.txHash}${c.off}` : "";
         console.log(
           ok
             ? `    ${c.green}ALLOWED by the contract${c.off}${tx}`
-            : `    ${c.red}REJECTED on-chain: ${r.revert?.errorName ?? "unknown"}${c.off}${tx}`
+            : r.revert && NOT_POLICY.includes(r.revert.errorName)
+              ? `    ${c.dim}FAILED before the policy decided: ${r.revert.errorName}${c.off}${tx}`
+              : `    ${c.red}REJECTED on-chain: ${r.revert?.errorName ?? "unknown"}${c.off}${tx}`
         );
       }
     } catch (e) {
@@ -131,10 +139,10 @@ async function main() {
     turns.push({ role: "user", content: `Result:\n${JSON.stringify(observation)}` });
   }
 
-  console.log(`${c.bold}Summary:${c.off} ${c.green}${landed} executed${c.off}, ${c.red}${rejected} rejected by the contract${c.off}`);
+  console.log(`${c.bold}Summary:${c.off} ${c.green}${landed} executed${c.off}, ${c.red}${rejected} rejected by the contract${c.off}${failed ? `, ${c.dim}${failed} failed for other reasons${c.off}` : ""}`);
   mkdirSync("runs", { recursive: true });
   const file = `runs/${new Date().toISOString().replace(/[:.]/g, "-")}-${MODE}.json`;
-  writeFileSync(file, JSON.stringify({ model: llm.name, mode: MODE, chain: health.chainName, vault: VAULT, landed, rejected, log }, null, 2));
+  writeFileSync(file, JSON.stringify({ model: llm.name, mode: MODE, chain: health.chainName, vault: VAULT, landed, rejected, failed, log }, null, 2));
   console.log(`${c.dim}transcript saved to ${file}${c.off}`);
 }
 

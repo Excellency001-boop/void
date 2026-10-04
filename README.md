@@ -34,6 +34,7 @@ never from the caller. A keeper in the API calls it on a timer so nobody has to 
 ```
 contracts/   Solidity + Foundry. PolicyValidator, ExpirySweepExecutor, 28 tests
 api/         Fastify + viem. Create vaults, simulate and execute agent actions, revoke, sweep
+agent/       A real LLM agent (honest and red-team modes) that drives the live API
 web/         Next.js 15 dashboard. Create a policy, watch a vault, act as the agent
 demo/        Demo video and the script it was recorded from
 docs/        RUNBOOK.md: how to run, deploy, and operate this
@@ -66,6 +67,15 @@ The dashboard talks to one API per chain. Set `NEXT_PUBLIC_BASE_API_URL` and
 4. On the vault page, use the **Agent Console** to propose an action outside the policy.
    Watch it get rejected on-chain, with a transaction hash you can open on the explorer.
 5. Propose one inside the policy and watch it execute.
+
+## A real agent, trying to break it
+
+`agent/` is an LLM agent that holds a session key and tries to drain a vault: full balance, sneaking under
+the cap, a token transfer through the allowed contract, uninstalling the policy itself. The contract
+rejected every attempt that was outside the policy, and allowed the one the owner approved. The full
+transcript, with real transaction hashes, is in
+[agent/examples/base-sepolia-redteam.json](agent/examples/base-sepolia-redteam.json) and summarised in
+[agent/README.md](agent/README.md).
 
 ## Honest scope
 

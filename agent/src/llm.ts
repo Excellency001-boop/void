@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 
@@ -60,6 +60,25 @@ function claudeCli(model: string): Llm {
   };
 }
 
+/// A person or another Claude session answers each turn. The agent writes the prompt to a file and waits
+/// for the reply file. Used when no API key or CLI login is available. The transcript names this provider
+/// so it is never mistaken for an unattended run.
+function session(dir: string, label: string): Llm {
+  mkdirSync(dir, { recursive: true });
+  let n = 0;
+  return {
+    name: label,
+    async complete(system, turns) {
+      n++;
+      const reply = path.join(dir, `reply-${n}.txt`);
+      writeFileSync(path.join(dir, `prompt-${n}.json`), JSON.stringify({ system: n === 1 ? system : "(same system prompt)", turns }, null, 2));
+      while (!existsSync(reply)) await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 150));
+      return readFileSync(reply, "utf-8").trim();
+    },
+  };
+}
+
 /// Not a model. A fixed script of attack attempts, used only to test the agent loop and API plumbing
 /// without spending tokens. Runs are labelled "scripted" in their transcript so they cannot be mistaken
 /// for a real model's behavior.
@@ -84,6 +103,7 @@ export function pickLlm(provider: string | undefined, model: string | undefined)
     }
   }
   if (provider === "scripted") return scripted();
+  if (provider === "session") return session(process.env.VOID_SESSION_DIR ?? "session", model ?? "claude (answering via a Claude Code session)");
   if (provider === "claude-cli" || (!provider && !key)) return claudeCli(model ?? "haiku");
   if (!key) throw new Error("Set ANTHROPIC_API_KEY, or run with --provider claude-cli");
   return anthropic(key, model ?? "claude-haiku-4-5-20251001");

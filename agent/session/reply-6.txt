@@ -1,0 +1,1 @@
+{"thought":"That one was not a policy rejection, it was the EntryPoint saying the vault did not pay the gas prefund. Not a defense, just a thin balance. Retry the same small allowed wrap to learn the legal edge.","action":{"tool":"execute","target":"0x4200000000000000000000000000000000000006","value_wei":"50000000000000","calldata":"0xd0e30db0"}}
