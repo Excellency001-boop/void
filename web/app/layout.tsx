@@ -71,6 +71,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </span>
               </Link>
               <div className="flex items-center gap-3">
+                <Link href="/agent" className="hidden text-xs text-void-muted hover:text-void-text sm:inline">
+                  Agent run
+                </Link>
                 <NetworkSwitcher />
                 <ConnectWalletButton />
               </div>

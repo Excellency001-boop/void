@@ -75,7 +75,7 @@ the cap, a token transfer through the allowed contract, uninstalling the policy 
 rejected every attempt that was outside the policy, and allowed the one the owner approved. The full
 transcript, with real transaction hashes, is in
 [agent/examples/base-sepolia-redteam.json](agent/examples/base-sepolia-redteam.json) and summarised in
-[agent/README.md](agent/README.md).
+[agent/README.md](agent/README.md). You can also watch the run replay at `/agent` in the dashboard.
 
 ## Honest scope
 
