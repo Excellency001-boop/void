@@ -113,6 +113,34 @@ Not built yet, and we say so plainly:
 There is no token and no plan for one. The product is a guarantee, and the guarantee is the contract.
 See the README for the business model.
 
+## Who it is for, and the business
+
+**The market.** Anyone letting software spend on their behalf: teams running trading and treasury agents,
+wallets and apps that want to offer agent features without custody risk, and agent platforms that need a
+spending limit users can verify. The number of agents holding keys is growing faster than the tools to
+bound them. Today the choices are a hot wallet with no limits or a human approving every step.
+
+**Business model.** The contracts stay free and permissionless. Revenue comes from the layer on top:
+a small fee on relayed actions (paid in the gas token already in use), and a paid tier for teams that want
+hosted keepers, alerts, policy templates and audit-ready action logs. There is no token and no plan for one.
+
+**Go-to-market.** Start where the pain is sharpest and the buyers are reachable: builders of onchain AI
+agents on Base and Arbitrum. Ship the agent package (`agent/`) and an SDK so a developer can give their agent
+a bounded session key in a few lines, then let the live red-team replay (`/agent`) do the selling: it shows
+an agent failing to steal, with transactions anyone can open.
+
+**Distribution.** Open source (MIT) so agent frameworks can adopt it directly. Integrations with agent
+frameworks and wallets as the main channel. Public red-team runs against new models as recurring content.
+
+**Demand validation, stated honestly.** We have not yet run a pilot with an outside team, so we have no
+customer numbers to report. What we have is working proof of the mechanism: a real agent attacking a live
+vault and losing, on public testnets, with the code open. The next step is a pilot with two or three
+agent builders on Base or Arbitrum.
+
+## Chain tracks
+Built for the **Base** and **Arbitrum** tracks: the same contracts are deployed and exercised on Base Sepolia
+and Arbitrum Sepolia, each with its own API. Mainnet is not deployed yet and we say so above.
+
 ## Try it in under a minute
 Open the dashboard and press **Create a session vault**. Set a spend cap, then one allowed contract
 and function, and press **Seal this policy on-chain**. Send the vault a little test ETH, then use the
@@ -122,6 +150,8 @@ the recorded red-team run.
 
 ## Team
 Excellency001-boop (GitHub). Solo builder.
+
+**[ADD: your name, a 2 to 3 line background (what you have built, how long), and your city and country. The portal asks for team member backgrounds and team location.]**
 
 ## Links
 - Live dashboard: https://void-sessionvault.vercel.app
