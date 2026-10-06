@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VOID voice studio</title>
+<style>
+  :root { --bg:#0b0b0e; --panel:#141418; --line:#26262e; --text:#f5f5f7; --muted:#a8a8b3; --dim:#6b6b76; --accent:#6c63ff; --cta:#ff6b2c; --ok:#34d399; --bad:#f0475c; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 Inter, system-ui, sans-serif; }
+  header { display:flex; align-items:baseline; gap:14px; padding:18px 28px; border-bottom:1px solid var(--line); }
+  header b { font:600 18px "IBM Plex Mono", ui-monospace, monospace; letter-spacing:-.02em; }
+  header span { color:var(--dim); font-size:13px; }
+  main { display:grid; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr); gap:24px; padding:24px 28px; max-width:1500px; margin:0 auto; }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+  video { width:100%; border-radius:10px; border:1px solid var(--line); background:#000; display:block; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .label { font:500 11px "IBM Plex Mono", ui-monospace, monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--dim); }
+  #now { font:600 30px/1.3 Inter, system-ui, sans-serif; letter-spacing:-.01em; min-height:7.8em; margin-top:10px; }
+  #now.quiet { color:var(--dim); font-weight:500; font-size:22px; }
+  #next { color:var(--muted); font-size:17px; margin-top:14px; min-height:3.2em; }
+  .bar { height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin-top:16px; }
+  .bar i { display:block; height:100%; width:0; background:var(--accent); }
+  .row { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; align-items:center; }
+  button { font:600 15px Inter, system-ui, sans-serif; border-radius:8px; border:1px solid var(--line); background:#1c1c22; color:var(--text); padding:11px 18px; cursor:pointer; }
+  button:hover:not(:disabled) { border-color:#3a3a46; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  button.cta { background:var(--cta); border-color:var(--cta); color:#16100c; }
+  button.rec { background:var(--bad); border-color:var(--bad); color:#fff; }
+  #meter { width:140px; height:10px; background:var(--line); border-radius:5px; overflow:hidden; }
+  #meter i { display:block; height:100%; width:0; background:var(--ok); transition:width .06s; }
+  #status { color:var(--muted); font-size:14px; margin-top:12px; min-height:1.4em; }
+  #count { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(11,11,14,.88); font:800 220px/1 "Bricolage Grotesque", Inter, sans-serif; z-index:10; }
+  ol { margin:10px 0 0; padding-left:20px; color:var(--muted); font-size:14px; }
+  ol li { margin:5px 0; }
+  .tips li b { color:var(--text); font-weight:600; }
+  a { color:var(--accent); }
+  .pill { display:inline-block; padding:2px 9px; border-radius:99px; border:1px solid var(--line); font:500 12px "IBM Plex Mono", monospace; color:var(--muted); }
+  .pill.on { color:var(--bad); border-color:var(--bad); }
+</style>
+</head>
+<body>
+<header><b>VOID</b><span>voice studio. Read along, record, done.</span></header>
+
+<div id="count"></div>
+
+<main>
+  <section>
+    <video id="vid" src="VOID-demo-silent.mp4" muted playsinline preload="auto"></video>
+    <div class="panel" style="margin-top:18px">
+      <div class="label">Before you start</div>
+      <ol class="tips">
+        <li><b>Use headphones.</b> If you use speakers the video's room sound is not a problem (it is silent), but headphones keep your recording clean.</li>
+        <li><b>Quiet room, phone on silent,</b> mouth about a hand span from the mic.</li>
+        <li><b>Rehearse first.</b> The teleprompter shows each line a few seconds early. Read it like you are showing a friend.</li>
+        <li><b>Mistakes are fine.</b> Just press Record again. A take is 2 minutes.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <div class="panel">
+      <div class="row" style="margin-top:0;justify-content:space-between">
+        <div class="label">Say this</div>
+        <div><span class="pill" id="state">idle</span></div>
+      </div>
+      <div id="now" class="quiet">Press Mic check, then Rehearse.</div>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="label" style="margin-top:18px">Next</div>
+      <div id="next"></div>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <div class="row" style="margin-top:0">
+        <button id="mic">Mic check</button>
+        <div id="meter"><i></i></div>
+      </div>
+      <div class="row">
+        <button id="rehearse" disabled>Rehearse (no recording)</button>
+        <button id="record" class="rec" disabled>Record the take</button>
+        <button id="stop" disabled>Stop</button>
+      </div>
+      <div id="status"></div>
+      <div class="row" id="after" style="display:none">
+        <button id="preview">Play with my voice</button>
+        <button id="download" class="cta">Download my voice</button>
+      </div>
+      <audio id="aud" style="display:none"></audio>
+    </div>
+
+    <div class="panel" style="margin-top:18px" id="finish">
+      <div class="label">After you download</div>
+      <ol>
+        <li>Move the downloaded file into the <b style="color:var(--text)">void/demo</b> folder.</li>
+        <li>In a terminal: <code>cd /Users/EXCELLENCY/Desktop/Projectx/vibeathon/void/demo &amp;&amp; ./add-voice.sh voice-pre*.webm</code></li>
+        <li>You get <b style="color:var(--text)">VOID-demo.mp4</b>, your voice on the video.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const vid = $('vid'), nowEl = $('now'), nextEl = $('next'), bar = $('bar'), statusEl = $('status'), stateEl = $('state');
+let beats = [], stream = null, rec = null, chunks = [], blob = null, analyser = null, raf = 0;
+let mode = 'idle', preroll = 3, measuredPre = 3, lastId = null;
+
+const LEAD = 2.5; // show a line this many seconds before it starts
+
+fetch('timeline.json').then(r => r.json()).then(d => { beats = d.tl; render(0); });
+
+function fmt(s) { return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0'); }
+
+function render(t) {
+  // find the current beat and the next one with words
+  let cur = -1;
+  for (let i = 0; i < beats.length; i++) if (t >= beats[i].start) cur = i;
+  const wordsAfter = (from) => { for (let i = from; i < beats.length; i++) if (beats[i].text.trim()) return i; return -1; };
+  // lead-in: if the next spoken line is about to start, show it as current-soon
+  let show = cur;
+  const upcoming = wordsAfter(cur + 1);
+  if (upcoming >= 0 && beats[upcoming].start - t <= LEAD) show = upcoming;
+  if (show < 0) { nowEl.className = 'quiet'; nowEl.textContent = 'Starting…'; nextEl.textContent = beats[0] ? beats[0].text : ''; bar.style.width = '0'; return; }
+  const b = beats[show];
+  if (!b.text.trim()) { nowEl.className = 'quiet'; nowEl.textContent = '(pause, let the screen breathe)'; }
+  else { nowEl.className = ''; nowEl.textContent = b.text; }
+  const nxt = wordsAfter(show + 1);
+  nextEl.textContent = nxt >= 0 ? beats[nxt].text : '(end)';
+  const end = b.start + b.window;
+  const pct = Math.max(0, Math.min(1, (t - b.start) / b.window));
+  bar.style.width = (pct * 100) + '%';
+  bar.style.background = (t > end - 1.2 && t >= b.start) ? 'var(--cta)' : 'var(--accent)';
+}
+
+function tick() {
+  if (mode === 'playing') render(vid.currentTime);
+  if (analyser) {
+    const buf = new Uint8Array(analyser.fftSize); analyser.getByteTimeDomainData(buf);
+    let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v - 128));
+    $('meter').firstElementChild.style.width = Math.min(100, peak / 90 * 100) + '%';
+  }
+  raf = requestAnimationFrame(tick);
+}
+tick();
+
+function setState(s, txt) { stateEl.textContent = txt || s; stateEl.className = 'pill' + (s === 'rec' ? ' on' : ''); }
+function setStatus(t) { statusEl.textContent = t; }
+
+$('mic').onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: false, noiseSuppression: true, autoGainControl: true } });
+  } catch (e) { setStatus('The browser blocked the microphone. Click the lock icon in the address bar, allow the mic, and try again.'); return; }
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = ctx.createAnalyser(); analyser.fftSize = 1024;
+  ctx.createMediaStreamSource(stream).connect(analyser);
+  $('mic').textContent = 'Mic is on'; $('mic').disabled = true;
+  $('rehearse').disabled = false; $('record').disabled = false;
+  setStatus('Say something. The green bar should move, but not hit the end.');
+};
+
+function countdown(n) {
+  return new Promise(res => {
+    const c = $('count'); c.style.display = 'flex';
+    let k = n; c.textContent = k;
+    const iv = setInterval(() => { k--; if (k <= 0) { clearInterval(iv); c.style.display = 'none'; res(); } else c.textContent = k; }, 1000);
+  });
+}
+
+async function playVideo(recording) {
+  vid.currentTime = 0; mode = 'playing'; render(0);
+  $('stop').disabled = false; $('rehearse').disabled = true; $('record').disabled = true;
+  const t0 = performance.now();
+  await vid.play();
+  return t0;
+}
+
+$('rehearse').onclick = async () => {
+  setState('play', 'rehearsing'); setStatus('Rehearsal. Nothing is being recorded.');
+  await countdown(3); await playVideo(false);
+};
+
+$('record').onclick = async () => {
+  blob = null; chunks = []; $('after').style.display = 'none';
+  const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
+  rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = () => {
+    blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+    $('aud').src = URL.createObjectURL(blob);
+    $('after').style.display = 'flex';
+    setState('idle', 'done'); setStatus('Recorded ' + fmt(vid.currentTime) + '. Listen back, or record again.');
+  };
+  setState('rec', 'recording');
+  setStatus('Recording. Read each line as it appears.');
+  const recStart = performance.now();
+  rec.start();
+  await countdown(preroll);
+  vid.currentTime = 0;
+  mode = 'playing'; $('stop').disabled = false; $('rehearse').disabled = true; $('record').disabled = true;
+  await new Promise(r => { vid.addEventListener('playing', r, { once: true }); vid.play(); });
+  measuredPre = (performance.now() - recStart) / 1000;
+  lastId = 'rec';
+};
+
+vid.onended = () => stopAll(true);
+$('stop').onclick = () => stopAll(false);
+
+function stopAll(ended) {
+  mode = 'idle'; vid.pause();
+  $('stop').disabled = true; $('rehearse').disabled = false; $('record').disabled = false;
+  if (rec && rec.state === 'recording') {
+    setTimeout(() => rec.stop(), ended ? 900 : 0); // keep a beat of tail after the video ends
+  } else { setState('idle'); setStatus(''); }
+  nowEl.className = 'quiet'; nowEl.textContent = ended ? 'That is the end. Nice.' : 'Stopped.'; nextEl.textContent = '';
+}
+
+$('preview').onclick = async () => {
+  // Browser-recorded audio often cannot seek, so play it from its start and begin the video
+  // after the same lead-in the recording had.
+  const a = $('aud');
+  a.currentTime = 0; vid.currentTime = 0; mode = 'idle';
+  setStatus('Playing your voice over the video.');
+  a.play();
+  setTimeout(() => vid.play(), measuredPre * 1000);
+  vid.onended = () => { a.pause(); setStatus('Done.'); };
+};
+
+$('download').onclick = () => {
+  if (!blob) return;
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = 'voice-pre' + measuredPre.toFixed(2) + '.webm'; a.click();
+  setStatus('Saved as ' + a.download + ' in your Downloads folder.');
+};
+</script>
+</body>
+</html>
