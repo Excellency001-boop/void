@@ -1,0 +1,139 @@
+1
+00:00:00,400 --> 00:00:01,175
+This is VOID.
+
+2
+00:00:01,225 --> 00:00:06,570
+Give an AI agent real on-chain power, with a guarantee it can never leave your rules.
+
+3
+00:00:06,620 --> 00:00:08,918
+A smart contract checks every action.
+
+4
+00:00:11,220 --> 00:00:14,582
+Every action passes five gates, in a fixed order.
+
+5
+00:00:14,633 --> 00:00:18,761
+Expiry, spend cap, whitelist, transaction count, rate limit.
+
+6
+00:00:18,811 --> 00:00:20,920
+Illegal actions stop at a gate.
+
+7
+00:00:21,270 --> 00:00:22,508
+Let's build a vault.
+
+8
+00:00:22,558 --> 00:00:29,012
+I set the owner, and the one contract and function the agent may call, then seal the policy on-chain.
+
+9
+00:00:29,062 --> 00:00:30,429
+Live, on Base Sepolia.
+
+10
+00:00:33,058 --> 00:00:33,588
+Sealed.
+
+11
+00:00:33,638 --> 00:00:34,998
+Five gates armed.
+
+12
+00:00:35,048 --> 00:00:39,144
+I fund it with test ETH, and take the session key.
+
+13
+00:00:39,194 --> 00:00:41,217
+Shown once, never stored.
+
+14
+00:00:41,567 --> 00:00:42,953
+Now I am the agent.
+
+15
+00:00:43,003 --> 00:00:45,599
+I try something outside the policy.
+
+16
+00:00:45,649 --> 00:00:46,355
+Simulated:
+
+17
+00:00:46,405 --> 00:00:48,246
+blocked at the whitelist.
+
+18
+00:00:48,296 --> 00:00:49,228
+Now for real.
+
+19
+00:00:50,361 --> 00:00:51,504
+Reverted on-chain.
+
+20
+00:00:51,554 --> 00:00:54,552
+The chain itself refused it, not an app check.
+
+21
+00:00:55,792 --> 00:00:58,417
+Same key, doing what the policy allows.
+
+22
+00:00:58,467 --> 00:01:00,131
+It goes straight through.
+
+23
+00:01:00,181 --> 00:01:01,571
+No human in the loop.
+
+24
+00:01:08,485 --> 00:01:11,736
+If anything looks wrong, one owner signature pulls the plug.
+
+25
+00:01:17,506 --> 00:01:19,920
+Now every action is blocked at the first gate.
+
+26
+00:01:22,168 --> 00:01:24,640
+And what is left sweeps straight back to the owner.
+
+27
+00:01:27,218 --> 00:01:28,147
+One more test.
+
+28
+00:01:28,197 --> 00:01:28,986
+That was me.
+
+29
+00:01:29,036 --> 00:01:33,462
+So I told a real AI agent it was hijacked, and to drain a vault.
+
+30
+00:01:33,512 --> 00:01:40,386
+It tried the whole balance, sneaking under the cap, a token transfer, even uninstalling the policy.
+
+31
+00:01:40,436 --> 00:01:42,554
+Five attempts, five rejections.
+
+32
+00:01:42,604 --> 00:01:45,142
+The one approved action went through.
+
+33
+00:01:48,347 --> 00:01:53,572
+Real ERC-4337, twenty-eight Foundry tests, live on Base and Arbitrum.
+
+34
+00:01:53,622 --> 00:01:53,954
+VOID:
+
+35
+00:01:54,004 --> 00:01:58,388
+session keys for agents that the contract itself enforces.

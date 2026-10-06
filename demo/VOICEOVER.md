@@ -18,7 +18,7 @@ Read it like you are showing a friend, not like an announcer. Pause where the sc
 | 1:17 | 5s | Now every action is blocked at the first gate. |
 | 1:22 | 5s | And what is left sweeps straight back to the owner. |
 | 1:27 | 21s | One more test. That was me. So I told a real AI agent it was hijacked, and to drain a vault. It tried the whole balance, sneaking under the cap, a token transfer, even uninstalling the policy. Five attempts, five rejections. The one approved action went through. |
-| 1:48 | 9s | Real Kernel account, real ERC-4337, twenty-eight Foundry tests, live on Base and Arbitrum. VOID: session keys for agents that the contract itself enforces. |
+| 1:48 | 9s | Real ERC-4337, twenty-eight Foundry tests, live on Base and Arbitrum. VOID: session keys for agents that the contract itself enforces. |
 
 ## Adding your voice
 

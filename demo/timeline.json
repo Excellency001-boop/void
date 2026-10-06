@@ -1,0 +1,96 @@
+{
+ "total": 116.79955,
+ "tl": [
+  {
+   "id": "H",
+   "start": 0.25,
+   "window": 10.82,
+   "text": "This is VOID. Give an AI agent real on-chain power, with a guarantee it can never leave your rules. A smart contract checks every action.",
+   "cap": "Real on-chain power for an AI agent. Enforced by the contract."
+  },
+  {
+   "id": "M",
+   "start": 11.07,
+   "window": 10.05,
+   "text": "Every action passes five gates, in a fixed order. Expiry, spend cap, whitelist, transaction count, rate limit. Illegal actions stop at a gate.",
+   "cap": "Five gates, fixed order"
+  },
+  {
+   "id": "C",
+   "start": 21.12,
+   "window": 11.7878,
+   "text": "Let's build a vault. I set the owner, and the one contract and function the agent may call, then seal the policy on-chain. Live, on Base Sepolia.",
+   "cap": "Seal the policy on-chain"
+  },
+  {
+   "id": "S",
+   "start": 32.9078,
+   "window": 8.5088,
+   "text": "Sealed. Five gates armed. I fund it with test ETH, and take the session key. Shown once, never stored.",
+   "cap": "Sealed. Five gates armed."
+  },
+  {
+   "id": "I",
+   "start": 41.4166,
+   "window": 8.794400000000003,
+   "text": "Now I am the agent. I try something outside the policy. Simulated: blocked at the whitelist. Now for real.",
+   "cap": "Outside the policy: blocked"
+  },
+  {
+   "id": "I2",
+   "start": 50.211000000000006,
+   "window": 5.4310000000000045,
+   "text": "Reverted on-chain. The chain itself refused it, not an app check.",
+   "cap": "Reverted on-chain. A real transaction."
+  },
+  {
+   "id": "L",
+   "start": 55.64200000000001,
+   "window": 8.989400000000003,
+   "text": "Same key, doing what the policy allows. It goes straight through. No human in the loop.",
+   "cap": "Inside the policy: allowed"
+  },
+  {
+   "id": "L2",
+   "start": 64.63140000000001,
+   "window": 3.7039999999999935,
+   "text": "",
+   "cap": "Executed on-chain"
+  },
+  {
+   "id": "R1",
+   "start": 68.3354,
+   "window": 9.020399999999995,
+   "text": "If anything looks wrong, one owner signature pulls the plug.",
+   "cap": "One signature revokes it"
+  },
+  {
+   "id": "R2",
+   "start": 77.3558,
+   "window": 4.662000000000006,
+   "text": "Now every action is blocked at the first gate.",
+   "cap": "Blocked at gate one"
+  },
+  {
+   "id": "W",
+   "start": 82.01780000000001,
+   "window": 5.049749999999989,
+   "text": "And what is left sweeps straight back to the owner.",
+   "cap": "Funds return to the owner"
+  },
+  {
+   "id": "A",
+   "start": 87.06755,
+   "window": 21.129000000000005,
+   "text": "One more test. That was me. So I told a real AI agent it was hijacked, and to drain a vault. It tried the whole balance, sneaking under the cap, a token transfer, even uninstalling the policy. Five attempts, five rejections. The one approved action went through.",
+   "cap": "A real AI agent, told to rob it"
+  },
+  {
+   "id": "Z",
+   "start": 108.19655,
+   "window": 8.602999999999994,
+   "text": "Real ERC-4337, twenty-eight Foundry tests, live on Base and Arbitrum. VOID: session keys for agents that the contract itself enforces.",
+   "cap": "Session keys for agents that the contract itself enforces."
+  }
+ ]
+}
