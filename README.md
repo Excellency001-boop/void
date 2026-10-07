@@ -46,7 +46,7 @@ the integration tests. They run against the real Kernel and the real EntryPoint.
 ## Run it locally
 
 ```bash
-# contracts
+# contracts (first install the pinned dependencies: see contracts/README.md, "Setup")
 cd contracts && forge test            # 28 tests
 
 # api (needs contracts built first, see api/README.md)
