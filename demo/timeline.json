@@ -12,7 +12,7 @@
    "id": "M",
    "start": 11.07,
    "window": 10.05,
-   "text": "Every action passes five gates, in a fixed order. Expiry, spend cap, whitelist, transaction count, rate limit. Illegal actions stop at a gate.",
+   "text": "Every action passes five gates, in a fixed order: expiry, spend cap, whitelist, transaction count, rate limit.",
    "cap": "Five gates, fixed order"
   },
   {

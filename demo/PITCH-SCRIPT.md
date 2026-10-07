@@ -16,7 +16,7 @@ Now I'm building VOID. Today, if you let an AI agent spend your money, you have 
 I didn't just say that, I tested it. I told a real AI agent it was hijacked and to drain a vault. It tried five different ways. The contract rejected all five, on-chain, with real transactions anyone can open. Only the action I approved went through. You can replay that run on our site.
 
 **Why me (1:20)**
-Why me? First, I hit this problem myself, every time I gave an agent a key. Second, I ship the whole thing alone: contracts, API, app and demo, in about two weeks. Third, as a teacher, I explain hard things simply, and as a scientist, I design tests that could prove me wrong.
+Why me? First, I hit this problem myself, every time I gave an agent a key. Second, I ship the whole thing alone: contracts, API, app and demo, in about ten days. Third, as a teacher, I explain hard things simply, and as a scientist, I design tests that could prove me wrong.
 
 **Honest status and close (1:45)**
 It's testnet only, on Base and Arbitrum, and not audited yet. Next, I want a pilot with a few agent builders. VOID: session keys for agents that the contract itself enforces. Thank you.
