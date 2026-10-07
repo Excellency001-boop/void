@@ -1,115 +1,151 @@
 1
-00:00:00,300 --> 00:00:04,200
-Hi, I'm Isiaq Tijani, a solo builder from Ibadan, Nigeria.
+00:00:00,400 --> 00:00:03,855
+Hi, I'm Isiaq Tijani, a solo builder from Ibadan,
 
 2
-00:00:04,250 --> 00:00:06,174
-I'm a biochemist by training.
+00:00:03,875 --> 00:00:04,600
+Nigeria.
 
 3
-00:00:06,224 --> 00:00:12,848
-I graduated with first class from an Arabic college, I've written books, and I teach biochemistry.
+00:00:05,287 --> 00:00:07,075
+I'm a biochemist by training.
 
 4
-00:00:12,898 --> 00:00:20,338
-I taught myself to build software, and over the past months I've built several AI-agent and on-chain products.
+00:00:07,712 --> 00:00:10,505
+I graduated with first class from an Arabic college,
 
 5
-00:00:21,288 --> 00:00:22,788
-Now I'm building VOID.
+00:00:10,525 --> 00:00:13,100
+I've written books, and I teach biochemistry.
 
 6
-00:00:22,838 --> 00:00:27,932
-Today, if you let an AI agent spend your money, you have two bad options.
+00:00:13,763 --> 00:00:15,775
+I taught myself to build software,
 
 7
-00:00:27,982 --> 00:00:29,764
-Give it a wallet and hope.
+00:00:15,838 --> 00:00:18,793
+and over the past months I've built several AI-agent and on-chain
 
 8
-00:00:29,814 --> 00:00:33,780
-Or approve every step, and then it's not really an agent.
+00:00:18,813 --> 00:00:19,587
+products.
 
 9
-00:00:33,830 --> 00:00:35,401
-VOID is a third option.
+00:00:21,268 --> 00:00:22,630
+Now I'm building VOID.
 
 10
-00:00:35,451 --> 00:00:36,599
-You set a policy:
+00:00:23,380 --> 00:00:26,235
+Today, if you let an AI agent spend your money,
 
 11
-00:00:36,649 --> 00:00:41,108
-how much, for how long, and the one contract the agent may call.
+00:00:26,255 --> 00:00:27,755
+you have two bad options.
 
 12
-00:00:41,158 --> 00:00:43,152
-A smart contract enforces it.
+00:00:28,456 --> 00:00:30,056
+Give it a wallet and hope.
 
 13
-00:00:43,202 --> 00:00:46,534
-Outside the policy, the agent simply cannot act.
+00:00:30,768 --> 00:00:34,118
+Or approve every step, and then it's not really an agent.
 
 14
-00:00:47,484 --> 00:00:49,888
-I didn't just say that, I tested it.
+00:00:34,843 --> 00:00:36,305
+VOID is a third option.
 
 15
-00:00:49,938 --> 00:00:53,978
-I told a real AI agent it was hijacked and to drain a vault.
+00:00:36,980 --> 00:00:38,168
+You set a policy:
 
 16
-00:00:54,028 --> 00:00:55,955
-It tried five different ways.
+00:00:38,206 --> 00:00:41,818
+how much, for how long, and the one contract the agent may call.
 
 17
-00:00:56,005 --> 00:01:01,477
-The contract rejected all five, on-chain, with real transactions anyone can open.
+00:00:42,480 --> 00:00:44,505
+A smart contract enforces it.
 
 18
-00:01:01,527 --> 00:01:04,204
-Only the action I approved went through.
+00:00:45,218 --> 00:00:48,293
+Outside the policy, the agent simply cannot act.
 
 19
-00:01:04,254 --> 00:01:06,658
-You can replay that run on our site.
+00:00:50,080 --> 00:00:52,430
+I didn't just say that, I tested it.
 
 20
-00:01:07,608 --> 00:01:08,081
-Why me?
+00:00:53,167 --> 00:00:56,555
+I told a real AI agent it was hijacked and to drain a vault.
 
 21
-00:01:08,131 --> 00:01:13,083
-First, I hit this problem myself, every time I gave an agent a key.
+00:00:57,267 --> 00:00:59,055
+It tried five different ways.
 
 22
-00:01:13,133 --> 00:01:15,845
-Second, I ship the whole thing alone:
+00:00:59,755 --> 00:01:01,710
+The contract rejected all five,
 
 23
-00:01:15,895 --> 00:01:19,428
-contracts, API, app and demo, in about ten days.
+00:01:01,730 --> 00:01:04,730
+on-chain, with real transactions anyone can open.
 
 24
-00:01:19,478 --> 00:01:27,790
-Third, as a teacher, I explain hard things simply, and as a scientist, I design tests that could prove me wrong.
+00:01:05,405 --> 00:01:07,492
+Only the action I approved went through.
 
 25
-00:01:28,740 --> 00:01:33,211
-It's testnet only, on Base and Arbitrum, and not audited yet.
+00:01:08,192 --> 00:01:10,255
+You can replay that run on our site.
 
 26
-00:01:33,261 --> 00:01:36,695
-Next, I want a pilot with a few agent builders.
+00:01:12,028 --> 00:01:12,715
+Why me?
 
 27
-00:01:36,745 --> 00:01:37,066
-VOID:
+00:01:13,465 --> 00:01:15,820
+First, I hit this problem myself,
 
 28
-00:01:37,116 --> 00:01:41,365
-session keys for agents that the contract itself enforces.
+00:01:15,840 --> 00:01:17,703
+every time I gave an agent a key.
 
 29
-00:01:41,415 --> 00:01:42,106
+00:01:18,403 --> 00:01:20,778
+Second, I ship the whole thing alone:
+
+30
+00:01:20,865 --> 00:01:24,553
+contracts, API, app and demo, in about ten days.
+
+31
+00:01:25,228 --> 00:01:28,465
+Third, as a teacher, I explain hard things simply,
+
+32
+00:01:28,540 --> 00:01:31,740
+and as a scientist, I design tests that could prove me wrong.
+
+33
+00:01:33,352 --> 00:01:36,094
+It's testnet only, on Base and Arbitrum,
+
+34
+00:01:36,114 --> 00:01:37,439
+and not audited yet.
+
+35
+00:01:38,177 --> 00:01:41,414
+Next, I want a pilot with a few agent builders.
+
+36
+00:01:42,077 --> 00:01:42,664
+VOID:
+
+37
+00:01:42,702 --> 00:01:46,039
+session keys for agents that the contract itself enforces.
+
+38
+00:01:46,727 --> 00:01:47,402
 Thank you.

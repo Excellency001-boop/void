@@ -9,9 +9,9 @@ Read it like you are showing a friend, not like an announcer. Pause where the sc
 | 0:00 | 11s | This is VOID. Give an AI agent real on-chain power, with a guarantee it can never leave your rules. A smart contract checks every action. |
 | 0:11 | 10s | Every action passes five gates, in a fixed order: expiry, spend cap, whitelist, transaction count, rate limit. |
 | 0:21 | 12s | Let's build a vault. I set the owner, and the one contract and function the agent may call, then seal the policy on-chain. Live, on Base Sepolia. |
-| 0:32 | 9s | Sealed. Five gates armed. I fund it with test ETH, and take the session key. Shown once, never stored. |
-| 0:41 | 9s | Now I am the agent. I try something outside the policy. Simulated: blocked at the whitelist. Now for real. |
-| 0:50 | 5s | Reverted on-chain. The chain itself refused it, not an app check. |
+| 0:32 | 9s | Sealed. Five gates armed. I fund it, and take the session key, shown once. |
+| 0:41 | 9s | Now I'm the agent. Outside the policy, simulated: blocked at the whitelist. Now for real. |
+| 0:50 | 5s | Reverted on-chain. The chain itself refused it. |
 | 0:55 | 9s | Same key, doing what the policy allows. It goes straight through. No human in the loop. |
 | 1:04 | 4s | (no words, let the screen breathe) |
 | 1:08 | 9s | If anything looks wrong, one owner signature pulls the plug. |

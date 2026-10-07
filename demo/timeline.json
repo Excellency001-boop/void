@@ -26,21 +26,21 @@
    "id": "S",
    "start": 32.9078,
    "window": 8.5088,
-   "text": "Sealed. Five gates armed. I fund it with test ETH, and take the session key. Shown once, never stored.",
+   "text": "Sealed. Five gates armed. I fund it, and take the session key, shown once.",
    "cap": "Sealed. Five gates armed."
   },
   {
    "id": "I",
    "start": 41.4166,
    "window": 8.794400000000003,
-   "text": "Now I am the agent. I try something outside the policy. Simulated: blocked at the whitelist. Now for real.",
+   "text": "Now I'm the agent. Outside the policy, simulated: blocked at the whitelist. Now for real.",
    "cap": "Outside the policy: blocked"
   },
   {
    "id": "I2",
    "start": 50.211000000000006,
    "window": 5.4310000000000045,
-   "text": "Reverted on-chain. The chain itself refused it, not an app check.",
+   "text": "Reverted on-chain. The chain itself refused it.",
    "cap": "Reverted on-chain. A real transaction."
   },
   {
