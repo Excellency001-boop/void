@@ -149,9 +149,17 @@ transaction hash, then try one inside the policy and watch it succeed. Or just o
 the recorded red-team run.
 
 ## Team
-Excellency001-boop (GitHub). Solo builder.
+Isiaq Tijani A. (GitHub: Excellency001-boop). Solo builder. Ibadan, Nigeria.
 
-**[ADD: your name, a 2 to 3 line background (what you have built, how long), and your city and country. The portal asks for team member backgrounds and team location.]**
+I'm Isiaq Tijani A., a solo builder from Ibadan, Nigeria.
+
+Over the past months I have designed, built and shipped several products where AI agents meet crypto: trading and risk co-pilots, agent guards, and on-chain apps across Base, Arbitrum, Solana and other chains. I do the whole stack myself: Solidity contracts and tests, the backend API, the web app, and the demo and docs. I focus on working, deployed products.
+
+VOID came out of that work. Each time I gave an agent a key, I faced the same choice: trust it blindly, or approve every step and lose the point of having an agent. I wanted a third option, where the smart contract, not the agent or the app, decides what is allowed.
+
+For VOID I wrote the policy validator and sweep contracts (28 tests), deployed them on Base Sepolia and Arbitrum Sepolia, built the API and the dashboard, and ran a real AI agent against it to try to steal funds. The contract rejected every out-of-policy attempt.
+
+Next, I am looking for two or three agent builders on Base and Arbitrum to pilot it with, then an audit before mainnet.
 
 ## Links
 - Live dashboard: https://void-sessionvault.vercel.app
